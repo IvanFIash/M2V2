@@ -102,7 +102,7 @@ double max_90_deg_correction(double rate, double kalman)
         return rate;
 }
 
-void Gyro(double* roll, double* pitch){
+void Gyro(double* roll_p, double* pitch_p){
     int timer;
     double seconds_passed;
     double roll_gyro_rate_deg_per_sec;
@@ -198,8 +198,8 @@ void Gyro(double* roll, double* pitch){
     roll_complementary  = 0.93 * (roll_complementary + roll_gyro_rate_deg_per_sec * seconds_passed) + 0.07 * roll;
     pitch_complementary = 0.93 * (pitch_complementary + pitch_gyro_rate_deg_per_sec * seconds_passed) + 0.07 * pitch;
 
-    roll = roll_kalman;
-    pitch = pitch_kalman;
+    roll_p = roll_kalman;
+    pitch_p = pitch_kalman;
 }
 
 int main()
@@ -210,10 +210,10 @@ int main()
     /* Wait for sensor to stabilize */
     delay(150);
 
-    double roll, pitch = 0.0, 0.0;
+    double* roll_p, pitch_p;
 
-    Gyro(roll, pitch);
+    Gyro(roll_p, pitch_p);
 
-    printf("Roll: %.4f, Pitch: %.4f", roll, pitch);
+    printf("Roll: %.4f, Pitch: %.4f", roll_p, pitch_p);
 
 }
