@@ -252,10 +252,10 @@ int main()
         return 1;
     }
 
-    /*set_control_safe(fd, V4L2_CID_AUTO_WHITE_BALANCE, 0, "Balance de blancos automático");
-    set_control_safe(fd, V4L2_CID_WHITE_BALANCE_TEMPERATURE, 4000, "Temperatura de balance de blancos");
-    set_control_safe(fd, V4L2_CID_BRIGHTNESS, 150, "Brillo");
-    //set_control(fd, V4L2_CID_CONTRAST, 200, "Contraste");
+    //set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, 0, "Balance de blancos automático");
+    //set_control(fd, V4L2_CID_WHITE_BALANCE_TEMPERATURE, 4000, "Temperatura de balance de blancos");
+    //set_control(fd, V4L2_CID_BRIGHTNESS, 150, "Brillo");
+    /*//set_control(fd, V4L2_CID_CONTRAST, 200, "Contraste");
     //set_control(fd, V4L2_CID_SATURATION, 100, "Saturación");
     set_control(fd, V4L2_CID_CONTRAST, 200, "Contraste");
     set_control(fd, V4L2_CID_SATURATION, 100, "Saturación");
