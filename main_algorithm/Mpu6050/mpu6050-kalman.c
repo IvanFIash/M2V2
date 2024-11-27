@@ -198,8 +198,8 @@ void Gyro(double* roll_p, double* pitch_p){
     roll_complementary  = 0.93 * (roll_complementary + roll_gyro_rate_deg_per_sec * seconds_passed) + 0.07 * roll;
     pitch_complementary = 0.93 * (pitch_complementary + pitch_gyro_rate_deg_per_sec * seconds_passed) + 0.07 * pitch;
 
-    roll_p = roll_kalman;
-    pitch_p = pitch_kalman;
+    *roll_p = roll_kalman;
+    *pitch_p = pitch_kalman;
 }
 
 int main()
@@ -214,6 +214,6 @@ int main()
 
     Gyro(roll_p, pitch_p);
 
-    printf("Roll: %.4f, Pitch: %.4f", roll_p, pitch_p);
+    printf("Roll: %.4f, Pitch: %.4f", *roll_p, *pitch_p);
 
 }
