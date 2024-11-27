@@ -215,7 +215,7 @@ int main()
 
     while(1){
         Gyro(&roll_p, &pitch_p);
-        printf("Roll: %.4f, Pitch: %.4f", roll_p, pitch_p);
+        printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
     }
 
 }
