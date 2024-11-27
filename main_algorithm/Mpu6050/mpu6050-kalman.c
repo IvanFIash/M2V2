@@ -213,8 +213,9 @@ int main()
     double* roll_p;
     double* pitch_p;
 
-    Gyro(roll_p, pitch_p);
-
-    printf("Roll: %.4f, Pitch: %.4f", *roll_p, *pitch_p);
+    while(1){
+        Gyro(roll_p, pitch_p);
+        printf("Roll: %.4f, Pitch: %.4f", *roll_p, *pitch_p);
+    }
 
 }
