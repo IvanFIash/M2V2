@@ -210,7 +210,8 @@ int main()
     /* Wait for sensor to stabilize */
     delay(150);
 
-    double* roll_p, pitch_p;
+    double* roll_p
+    double* pitch_p;
 
     Gyro(roll_p, pitch_p);
 
