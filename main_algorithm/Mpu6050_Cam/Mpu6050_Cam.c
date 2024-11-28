@@ -64,8 +64,8 @@ double pitch_gyro;
 double pitch_kalman;        /* Angle exposed to a Kalman filter */
 double pitch_complementary; /* Angle exposed to a Complementary filter */
 
-int ws = 1280
-int hs = 720
+int ws = 1280;
+int hs = 720;
 
 typedef struct {
     long double x;
