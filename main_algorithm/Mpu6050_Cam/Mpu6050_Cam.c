@@ -446,7 +446,7 @@ int main()
 
     printf("Imagen guardada como 'captura.jpg'\n");
 
-    unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+    /*unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
     if (!img) {
         perror("Error al asignar memoria para la imagen");
         munmap(buffer, buf.length);
@@ -454,9 +454,18 @@ int main()
         return 1;
     }
 
-    memcpy(img, buffer, buf.bytesused);
+    memcpy(img, buffer, buf.bytesused);*/
 
-    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, img, 100);
+    unsigned char *decoded_img = stbi_load_from_memory(buffer, buf.bytesused, &f_width, &f_height, NULL, 3);
+    if (!decoded_img) {
+        fprintf(stderr, "Error al decodificar los datos JPEG\n");
+        munmap(buffer, buf.length);
+        close(fd);
+        return 1;
+    }
+    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", f_width, f_height);
+
+    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, decoded_img, 100);
 
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
