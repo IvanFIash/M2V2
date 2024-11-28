@@ -12,6 +12,12 @@
 #include <sys/mman.h>
 #include <time.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 /* MPU6050 */
 #define MPU6050_I2C_DEVICE_ADDRESS     0x68
 #define REGISTER_FOR_POWER_MANAGEMENT  0x6B  /* PWR_MGMT_1 */
@@ -35,6 +41,8 @@
 #define IMAGE_WIDTH 1280
 #define IMAGE_HEIGHT 720
 
+#define f_img_per 100
+
 /* MPU6050 variables */
 int gyro_device_handler;
 double accX;
@@ -54,6 +62,19 @@ double pitch;
 double pitch_gyro;
 double pitch_kalman;        /* Angle exposed to a Kalman filter */
 double pitch_complementary; /* Angle exposed to a Complementary filter */
+
+typedef struct {
+    long double x;
+    long double y;
+} Point;
+
+typedef struct {
+    Point LU;
+    Point RU;
+    Point LD;
+    Point RD;
+} Section;
+
 
 int read_word_2c(int register_h)
 {
@@ -227,6 +248,93 @@ int set_control(int fd, int control_id, int value, const char *control_name) {
     return 0;
 }
 
+// Función para resolver un sistema de ecuaciones lineales usando factorización LU
+void solveLU(long double (*A)[8][8], long double *b, long double *x) {
+    long double L[8][8] = {0.0}, U[8][8] = {0.0};
+    int i, j, k;
+
+    // Factorización LU
+    for (i = 0; i < 8; i++) {
+        for (j = i; j < 8; j++) {
+            U[i][j] = (*A)[i][j];
+            for (k = 0; k < i; k++) {
+                U[i][j] -= L[i][k] * U[k][j];
+            }
+        }
+        for (j = i; j < 8; j++) {
+            if (i == j) {
+                L[j][i] = 1.0;
+            } else {
+                L[j][i] = (*A)[j][i];
+                for (k = 0; k < i; k++) {
+                    L[j][i] -= L[j][k] * U[k][i];
+                }
+                if (U[i][i] != 0) {
+                    L[j][i] /= U[i][i];
+                } else if (i == 1 && j == 4 && U[i][i] == 0) {
+                    L[j][i] /= 0.000000000001;
+                } else if (i == 3 && j == 5 && U[i][i] == 0) {
+                    L[j][i] /= 0.000001;
+                } else if (i == 3 && j == 7 && U[i][i] == 0) {
+                    L[j][i] /= 1;
+                } else if (i == 5 && U[i][i] == 0) {
+                    L[j][i] /= 1;
+                }
+            }
+        }
+    }
+
+    // Resolver L * y = b (sustitución hacia adelante)
+    long double y[8];
+    for (i = 0; i < 8; i++) {
+        y[i] = b[i];
+        for (j = 0; j < i; j++) {
+            y[i] -= L[i][j] * y[j];
+        }
+    }
+
+    // Resolver U * x = y (sustitución hacia atrás)
+    for (i = 7; i >= 0; i--) {
+        x[i] = y[i];
+        for (j = i + 1; j < 8; j++) {
+            x[i] -= U[i][j] * x[j];
+        }
+        if (U[i][i] != 0) {
+            x[i] /= U[i][i];
+        } else {
+            L[j][i] /= 1;
+        }
+    }
+}
+
+// Función para calcular la matriz de transformación perspectiva
+void P2Coefs(Section *source, Section *dest, long double (*m)[9]) {
+    // Matriz del sistema de ecuaciones
+    long double A[8][8] = {
+        {source->LU.x, source->LU.y, 1.0, 0, 0, 0, -source->LU.x * dest->LU.x, -source->LU.y * dest->LU.x},
+        {source->RU.x, source->RU.y, 1.0, 0, 0, 0, -source->RU.x * dest->RU.x, -source->RU.y * dest->RU.x},
+        {source->LD.x, source->LD.y, 1.0, 0, 0, 0, -source->LD.x * dest->LD.x, -source->LD.y * dest->LD.x},
+        {source->RD.x, source->RD.y, 1.0, 0, 0, 0, -source->RD.x * dest->RD.x, -source->RD.y * dest->RD.x},
+        {0, 0, 0, source->LU.x, source->LU.y, 1.0, -source->LU.x * dest->LU.y, -source->LU.y * dest->LU.y},
+        {0, 0, 0, source->RU.x, source->RU.y, 1.0, -source->RU.x * dest->RU.y, -source->RU.y * dest->RU.y},
+        {0, 0, 0, source->LD.x, source->LD.y, 1.0, -source->LD.x * dest->LD.y, -source->LD.y * dest->LD.y},
+        {0, 0, 0, source->RD.x, source->RD.y, 1.0, -source->RD.x * dest->RD.y, -source->RD.y * dest->RD.y}
+    };
+
+    // Vector de términos independientes
+    long double b[8] = {dest->LU.x, dest->RU.x, dest->LD.x, dest->RD.x, dest->LU.y, dest->RU.y, dest->LD.y, dest->RD.y};
+
+    // Solución del sistema
+    long double x[8];
+    solveLU(&A, b, x);
+
+    // Rellenar la matriz de transformación
+    for (int i = 0; i < 8; i++) {
+        (*m)[i] = x[i];
+    }
+    (*m)[8] = 1.0;
+}
+
 int main()
 {
     gyro_device_handler = wiringPiI2CSetup(MPU6050_I2C_DEVICE_ADDRESS);
@@ -308,6 +416,15 @@ int main()
         return 1;
     }
 
+    Section org_im = {
+        .LU = { .x = 255.0, .y = 458.0 },
+        .RU = { .x = 323.0, .y = 458.0 },
+        .LD = { .x = 143.0, .y = 633.0 },
+        .RD = { .x = 418.0, .y = 633.0 }
+    };
+
+    long double m[9];
+
     clock_t t;
     t = clock();
 
@@ -329,6 +446,72 @@ int main()
     printf("Imagen guardada como 'captura.jpg'\n");
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
+    Section im = {
+        .LU = { .x = org_im.LD.x + ((org_im.LU.x - org_im.LD.x) * f_img_per * 0.01),
+                .y = org_im.LD.y + ((org_im.LU.y - org_im.LD.y) * f_img_per * 0.01) },
+        .RU = { .x = org_im.RD.x + ((org_im.RU.x - org_im.RD.x) * f_img_per * 0.01),
+                .y = org_im.RD.y + ((org_im.RU.y - org_im.RD.y) * f_img_per * 0.01) },
+        .LD = { .x = org_im.LD.x, .y = org_im.LD.y },
+        .RD = { .x = org_im.RD.x, .y = org_im.RD.y }
+    };
+
+    int f_height = im.LD.y - im.LU.y;
+    int f_width = ((im.RU.x - im.LU.x) + (im.RD.x - im.LD.x))/2;
+
+    Section per = {
+        .LU = { .x = 0.0, .y = 0.0 },
+        .RU = { .x = (long double)f_width, .y = 0.0 },
+        .LD = { .x = 0.0, .y = (long double)f_height },
+        .RD = { .x = (long double)f_width, .y = (long double)f_height }
+    };
+
+    P2Coefs(&im, &per, &m);
+
+    printf("%.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
+
+    int ptimg_size = f_width * f_height;
+
+    unsigned char *ptimg = (unsigned char *) malloc(ptimg_size);
+
+    if (ptimg == NULL) {
+        printf("Error alocando memoria\n");
+        exit(1);
+    }
+
+    for(unsigned char *p = ptimg; p != ptimg + ptimg_size; p++) {
+        *p = 0;
+    }
+
+    int nwidth = IMAGE_WIDTH*channels;
+
+    int yme = (im.LU.y <= im.RU.y) ? im.LU.y : im.RU.y;
+
+    int yma = (im.LD.y >= im.RD.y) ? im.LD.y : im.RD.y;
+
+    for (int i = 0; i < IMAGE_HEIGHT; i++) {
+        for (int j = 0; j < nwidth; j += channels) {
+            if (j >= ((int)im.LD.x)*channels && j <= ((int)im.RD.x)*channels && i >= yme && i <= yma) {
+                int jj = j/channels;
+                double denom = (m[6]*jj + m[7]*i + m[8]);
+                int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
+                int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
+                if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
+                    ptimg[v*f_width + u] = (unsigned char)((img[i*nwidth + j] + img[i*nwidth + j + 1] + img[i*nwidth + j + 2])/3);
+                }
+            }
+        }
+    }
+
+    unsigned char prev = 0;
+
+    for (unsigned char *p = ptimg; p < ptimg + ptimg_size; p++) {
+        if (*p == 0) {
+            *p = prev;
+        } else {
+            prev = *p;
+        }
+    }
+
     t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC;
     printf("Tardo %f segundos en procesar.\n", time_taken);
@@ -343,12 +526,18 @@ int main()
         return 1;
     }
 
+    printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
+    stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
+
+    free(ptimg);
+
+    fwrite(buffer, buf.bytesused, 1, file);
+    fclose(file);
+
     t = clock() - t;
     time_taken = ((double)t)/CLOCKS_PER_SEC;
     printf("Tardo %f segundos en guardar la imgajen.\n", time_taken);
 
-    fwrite(buffer, buf.bytesused, 1, file);
-    fclose(file);
 
     // Liberar recursos
     munmap(buffer, buf.length);
