@@ -497,7 +497,7 @@ int main()
                 int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
                 int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
                 if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
-                    if (i*nwidth + j + 2 >= nwidth*IMAGE_HEIGHT) {
+                    if (i*nwidth + j + 2 >= buf.length) {
                         printf("a");
                     }
                     ptimg[v*f_width + u] = (unsigned char)((buffer[i*nwidth + j] + buffer[i*nwidth + j + 1] + buffer[i*nwidth + j + 2])/3);
