@@ -11,6 +11,7 @@
 #include <linux/videodev2.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <jpeglib.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -253,6 +254,44 @@ int set_control(int fd, int control_id, int value, const char *control_name) {
     return 0;
 }
 
+// Decodifica un buffer MJPEG a RGB
+int decode_mjpeg_to_rgb(unsigned char *mjpeg_data, size_t mjpeg_size, unsigned char *rgb_data, int *width, int *height) {
+    struct jpeg_decompress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_decompress(&cinfo);
+
+    jpeg_mem_src(&cinfo, mjpeg_data, mjpeg_size);
+
+    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
+        fprintf(stderr, "Error leyendo el encabezado JPEG\n");
+        jpeg_destroy_decompress(&cinfo);
+        return -1;
+    }
+
+    jpeg_start_decompress(&cinfo);
+
+    if (cinfo.output_width != *width || cinfo.output_height != *height) {
+        fprintf(stderr, "Las dimensiones de la imagen no coinciden (%dx%d vs %dx%d)\n",
+                cinfo.output_width, cinfo.output_height, *width, *height);
+        *width = cinfo.output_width;
+        *height = cinfo.output_height;
+    }
+
+    int row_stride = cinfo.output_width * cinfo.output_components; // Ancho en bytes por fila
+    while (cinfo.output_scanline < cinfo.output_height) {
+        unsigned char *row_pointer = rgb_data + cinfo.output_scanline * row_stride;
+        jpeg_read_scanlines(&cinfo, &row_pointer, 1);
+    }
+
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+
+    return 0; // Decodificación exitosa
+}
+
+
 // Función para resolver un sistema de ecuaciones lineales usando factorización LU
 void solveLU(long double (*A)[8][8], long double *b, long double *x) {
     long double L[8][8] = {0.0}, U[8][8] = {0.0};
@@ -460,16 +499,33 @@ int main()
 
     memcpy(img, buffer, buf.bytesused);*/
 
-    unsigned char *decoded_img = (unsigned char*)stbi_load_from_memory((unsigned char*)buffer, ws*hs*3, &ws, &hs, &ch, 3);
+    /*unsigned char *decoded_img = (unsigned char*)stbi_load_from_memory((unsigned char*)buffer, ws*hs*3, &ws, &hs, &ch, 3);
     if (!decoded_img) {
         fprintf(stderr, "Error al decodificar los datos JPEG\n");
         munmap(buffer, buf.length);
         close(fd);
         return 1;
     }
-    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", ws, hs);
+    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", ws, hs);*/
 
-    stbi_write_jpg("img.jpg", ws, hs, 1, decoded_img, 100);
+    unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+    if (!img) {
+        perror("Error al asignar memoria para la imagen");
+        munmap(buffer, buf.length);
+        close(fd);
+        return 1;
+    }
+
+    int result = decode_mjpeg_to_rgb(buffer, buf.bytesused, img, &ws, &hs);
+    if (result != 0) {
+        fprintf(stderr, "Error decodificando MJPEG a RGB\n");
+        free(img);
+        munmap(buffer, buf.length);
+        close(fd);
+        return 1;
+    }
+
+    stbi_write_jpg("img.jpg", ws, hs, 1, img, 100);
 
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
