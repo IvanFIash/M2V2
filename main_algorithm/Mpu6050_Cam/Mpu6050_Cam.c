@@ -487,7 +487,25 @@ int main()
         return 1;
     }
 
+    // Guardar los datos capturados (ya en formato JPEG) en un archivo
+    FILE *file = fopen("captura.jpg", "wb");
+    if (!file) {
+        perror("Error al abrir el archivo para guardar la imagen");
+        munmap(buffer, buf.length);
+        close(fd);
+        return 1;
+    }
     printf("Imagen guardada como 'captura.jpg'\n");
+
+    fwrite(buffer, buf.bytesused, 1, file);
+    fclose(file);
+
+    unsigned char *img = stbi_load("captura.jpg", &ws, &hs, &ch, 0);
+
+    if (img == NULL) {
+        printf("Error\n");
+        exit(1);
+    }
 
     /*unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
     if (!img) {
@@ -507,25 +525,6 @@ int main()
         return 1;
     }
     printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", ws, hs);*/
-
-    unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
-    if (!img) {
-        perror("Error al asignar memoria para la imagen");
-        munmap(buffer, buf.length);
-        close(fd);
-        return 1;
-    }
-
-    int result = decode_mjpeg_to_rgb(buffer, buf.length, img, &ws, &hs);
-    if (result != 0) {
-        fprintf(stderr, "Error decodificando MJPEG a RGB\n");
-        free(img);
-        munmap(buffer, buf.length);
-        close(fd);
-        return 1;
-    }
-
-    stbi_write_jpg("img.jpg", ws, hs, 1, img, 100);
 
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
@@ -579,7 +578,7 @@ int main()
                 int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
                 int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
                 if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
-                    ptimg[v*f_width + u] = (unsigned char)((buffer[i*nwidth + j] + buffer[i*nwidth + j + 1] + buffer[i*nwidth + j + 2])/3);
+                    ptimg[v*f_width + u] = (unsigned char)((img[i*nwidth + j] + img[i*nwidth + j + 1] + img[i*nwidth + j + 2])/3);
                 }
             }
         }
@@ -600,22 +599,10 @@ int main()
     printf("Tardo %f segundos en procesar.\n", time_taken);
     printf("FPS: %f.\n", 1/(time_taken));
 
-    // Guardar los datos capturados (ya en formato JPEG) en un archivo
-    FILE *file = fopen("captura.jpg", "wb");
-    if (!file) {
-        perror("Error al abrir el archivo para guardar la imagen");
-        munmap(buffer, buf.length);
-        close(fd);
-        return 1;
-    }
-
     printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
     stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
 
     free(ptimg);
-
-    fwrite(buffer, buf.bytesused, 1, file);
-    fclose(file);
 
     t = clock() - t;
     time_taken = ((double)t)/CLOCKS_PER_SEC;
