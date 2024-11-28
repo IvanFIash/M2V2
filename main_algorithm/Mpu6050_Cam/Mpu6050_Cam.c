@@ -445,6 +445,17 @@ int main()
     }
 
     printf("Imagen guardada como 'captura.jpg'\n");
+
+    unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+    if (!img) {
+        perror("Error al asignar memoria para la imagen");
+        munmap(buffer, buf.length);
+        close(fd);
+        return 1;
+    }
+
+    memcpy(img, buffer, buf.bytesused);
+
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
     Section im = {
@@ -497,10 +508,7 @@ int main()
                 int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
                 int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
                 if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
-                    if (i*nwidth + j + 2 >= buf.length) {
-                        printf("a");
-                    }
-                    ptimg[v*f_width + u] = (unsigned char)((buffer[i*nwidth + j] + buffer[i*nwidth + j + 1] + buffer[i*nwidth + j + 2])/3);
+                    ptimg[v*f_width + u] = (unsigned char)((img[i*nwidth + j] + img[i*nwidth + j + 1] + img[i*nwidth + j + 2])/3);
                 }
             }
         }
@@ -544,6 +552,7 @@ int main()
 
 
     // Liberar recursos
+    free(img);
     munmap(buffer, buf.length);
     close(fd);
 
