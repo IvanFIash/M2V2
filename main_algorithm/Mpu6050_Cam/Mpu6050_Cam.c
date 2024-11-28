@@ -66,6 +66,7 @@ double pitch_complementary; /* Angle exposed to a Complementary filter */
 
 int ws = 1280;
 int hs = 720;
+int ch = 3;
 
 typedef struct {
     long double x;
@@ -459,7 +460,7 @@ int main()
 
     memcpy(img, buffer, buf.bytesused);*/
 
-    unsigned char *decoded_img = stbi_load_from_memory((unsigned char*)buffer, buf.length, &ws, &hs, NULL, 3);
+    unsigned char *decoded_img = (unsigned char*)stbi_load_from_memory((unsigned char*)buffer, ws*hs*3, &ws, &hs, &ch, 3);
     if (!decoded_img) {
         fprintf(stderr, "Error al decodificar los datos JPEG\n");
         munmap(buffer, buf.length);
