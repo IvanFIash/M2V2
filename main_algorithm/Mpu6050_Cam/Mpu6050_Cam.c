@@ -368,7 +368,7 @@ int main()
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     fmt.fmt.pix.width = IMAGE_WIDTH;
     fmt.fmt.pix.height = IMAGE_HEIGHT;
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG; // Formato MJPEG
+    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24; // Formato MJPEG
     fmt.fmt.pix.field = V4L2_FIELD_NONE;
 
     if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1) {
@@ -446,7 +446,7 @@ int main()
 
     printf("Imagen guardada como 'captura.jpg'\n");
 
-    unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+    /*unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
     if (!img) {
         perror("Error al asignar memoria para la imagen");
         munmap(buffer, buf.length);
@@ -456,7 +456,7 @@ int main()
 
     memcpy(img, buffer, buf.bytesused);
 
-    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, img, 100);
+    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, img, 100);*/
 
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
@@ -510,7 +510,7 @@ int main()
                 int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
                 int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
                 if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
-                    ptimg[v*f_width + u] = (unsigned char)((img[i*nwidth + j] + img[i*nwidth + j + 1] + img[i*nwidth + j + 2])/3);
+                    ptimg[v*f_width + u] = (unsigned char)((buffer[i*nwidth + j] + buffer[i*nwidth + j + 1] + buffer[i*nwidth + j + 2])/3);
                 }
             }
         }
@@ -554,7 +554,7 @@ int main()
 
 
     // Liberar recursos
-    free(img);
+    //free(img);
     munmap(buffer, buf.length);
     close(fd);
 
