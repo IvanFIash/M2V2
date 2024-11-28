@@ -446,7 +446,7 @@ int main()
 
     printf("Imagen guardada como 'captura.jpg'\n");
 
-    /*unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+    unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
     if (!img) {
         perror("Error al asignar memoria para la imagen");
         munmap(buffer, buf.length);
@@ -456,7 +456,7 @@ int main()
 
     memcpy(img, buffer, buf.bytesused);
 
-    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, img, 100);*/
+    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, img, 100);
 
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
@@ -554,7 +554,7 @@ int main()
 
 
     // Liberar recursos
-    //free(img);
+    free(img);
     munmap(buffer, buf.length);
     close(fd);
 
