@@ -64,6 +64,9 @@ double pitch_gyro;
 double pitch_kalman;        /* Angle exposed to a Kalman filter */
 double pitch_complementary; /* Angle exposed to a Complementary filter */
 
+int ws = 1280
+int hs = 720
+
 typedef struct {
     long double x;
     long double y;
@@ -456,7 +459,7 @@ int main()
 
     memcpy(img, buffer, buf.bytesused);*/
 
-    unsigned char *decoded_img = stbi_load_from_memory(buffer, buf.bytesused, &IMAGE_WIDTH, &IMAGE_HEIGHT, NULL, 3);
+    unsigned char *decoded_img = stbi_load_from_memory(buffer, buf.bytesused, &ws, &hs, NULL, 3);
     if (!decoded_img) {
         fprintf(stderr, "Error al decodificar los datos JPEG\n");
         munmap(buffer, buf.length);
