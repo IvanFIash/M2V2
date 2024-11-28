@@ -459,7 +459,7 @@ int main()
 
     memcpy(img, buffer, buf.bytesused);*/
 
-    unsigned char *decoded_img = stbi_load_from_memory(buffer, buf.length, &ws, &hs, NULL, 3);
+    unsigned char *decoded_img = stbi_load_from_memory((unsigned char*)buffer, buf.length, &ws, &hs, NULL, 3);
     if (!decoded_img) {
         fprintf(stderr, "Error al decodificar los datos JPEG\n");
         munmap(buffer, buf.length);
