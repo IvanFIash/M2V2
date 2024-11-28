@@ -468,135 +468,155 @@ int main()
 
     long double m[9];
 
-    clock_t t;
-    t = clock();
+    while(1){
+        clock_t t;
+        t = clock();
 
-    // Poner el buffer en cola
-    if (ioctl(fd, VIDIOC_QBUF, &buf) == -1) {
-        perror("Error al poner el buffer en cola");
-        close(fd);
-        return 1;
-    }
+        // Poner el buffer en cola
+        if (ioctl(fd, VIDIOC_QBUF, &buf) == -1) {
+            perror("Error al poner el buffer en cola");
+            close(fd);
+            return 1;
+        }
 
-    // Esperar y sacar el buffer de la cola
-    Gyro(&roll_p, &pitch_p);
-    if (ioctl(fd, VIDIOC_DQBUF, &buf) == -1) {
-        perror("Error al sacar el buffer de la cola");
-        close(fd);
-        return 1;
-    }
+        // Esperar y sacar el buffer de la cola
+        Gyro(&roll_p, &pitch_p);
+        if (ioctl(fd, VIDIOC_DQBUF, &buf) == -1) {
+            perror("Error al sacar el buffer de la cola");
+            close(fd);
+            return 1;
+        }
 
-    // Guardar los datos capturados (ya en formato JPEG) en un archivo
-    FILE *file = fopen("captura.jpg", "wb");
-    if (!file) {
-        perror("Error al abrir el archivo para guardar la imagen");
-        munmap(buffer, buf.length);
-        close(fd);
-        return 1;
-    }
-    printf("Imagen guardada como 'captura.jpg'\n");
+        // Guardar los datos capturados (ya en formato JPEG) en un archivo
+        FILE *file = fopen("captura.jpg", "wb");
+        if (!file) {
+            perror("Error al abrir el archivo para guardar la imagen");
+            munmap(buffer, buf.length);
+            close(fd);
+            return 1;
+        }
+        printf("Imagen guardada como 'captura.jpg'\n");
 
-    fwrite(buffer, buf.bytesused, 1, file);
-    fclose(file);
+        fwrite(buffer, buf.bytesused, 1, file);
+        fclose(file);
 
-    unsigned char *img = stbi_load("captura.jpg", &ws, &hs, &ch, 0);
+        unsigned char *img = stbi_load("captura.jpg", &ws, &hs, &ch, 0);
 
-    if (img == NULL) {
-        printf("Error\n");
-        exit(1);
-    }
+        if (img == NULL) {
+            printf("Error\n");
+            exit(1);
+        }
 
-    /*unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
-    if (!img) {
-        perror("Error al asignar memoria para la imagen");
-        munmap(buffer, buf.length);
-        close(fd);
-        return 1;
-    }
+        /*unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+        if (!img) {
+            perror("Error al asignar memoria para la imagen");
+            munmap(buffer, buf.length);
+            close(fd);
+            return 1;
+        }
 
-    memcpy(img, buffer, buf.bytesused);*/
+        memcpy(img, buffer, buf.bytesused);*/
 
-    /*unsigned char *decoded_img = (unsigned char*)stbi_load_from_memory((unsigned char*)buffer, ws*hs*3, &ws, &hs, &ch, 3);
-    if (!decoded_img) {
-        fprintf(stderr, "Error al decodificar los datos JPEG\n");
-        munmap(buffer, buf.length);
-        close(fd);
-        return 1;
-    }
-    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", ws, hs);*/
+        /*unsigned char *decoded_img = (unsigned char*)stbi_load_from_memory((unsigned char*)buffer, ws*hs*3, &ws, &hs, &ch, 3);
+        if (!decoded_img) {
+            fprintf(stderr, "Error al decodificar los datos JPEG\n");
+            munmap(buffer, buf.length);
+            close(fd);
+            return 1;
+        }
+        printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", ws, hs);*/
 
-    printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
+        printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
-    Section im = {
-        .LU = { .x = org_im.LD.x + ((org_im.LU.x - org_im.LD.x) * f_img_per * 0.01),
-                .y = org_im.LD.y + ((org_im.LU.y - org_im.LD.y) * f_img_per * 0.01) },
-        .RU = { .x = org_im.RD.x + ((org_im.RU.x - org_im.RD.x) * f_img_per * 0.01),
-                .y = org_im.RD.y + ((org_im.RU.y - org_im.RD.y) * f_img_per * 0.01) },
-        .LD = { .x = org_im.LD.x, .y = org_im.LD.y },
-        .RD = { .x = org_im.RD.x, .y = org_im.RD.y }
-    };
+        Section im = {
+            .LU = { .x = org_im.LD.x + ((org_im.LU.x - org_im.LD.x) * f_img_per * 0.01),
+                    .y = org_im.LD.y + ((org_im.LU.y - org_im.LD.y) * f_img_per * 0.01) },
+            .RU = { .x = org_im.RD.x + ((org_im.RU.x - org_im.RD.x) * f_img_per * 0.01),
+                    .y = org_im.RD.y + ((org_im.RU.y - org_im.RD.y) * f_img_per * 0.01) },
+            .LD = { .x = org_im.LD.x, .y = org_im.LD.y },
+            .RD = { .x = org_im.RD.x, .y = org_im.RD.y }
+        };
 
-    int f_height = im.LD.y - im.LU.y;
-    int f_width = ((im.RU.x - im.LU.x) + (im.RD.x - im.LD.x))/2;
+        int f_height = im.LD.y - im.LU.y;
+        int f_width = ((im.RU.x - im.LU.x) + (im.RD.x - im.LD.x))/2;
 
-    Section per = {
-        .LU = { .x = 0.0, .y = 0.0 },
-        .RU = { .x = (long double)f_width, .y = 0.0 },
-        .LD = { .x = 0.0, .y = (long double)f_height },
-        .RD = { .x = (long double)f_width, .y = (long double)f_height }
-    };
+        Section per = {
+            .LU = { .x = 0.0, .y = 0.0 },
+            .RU = { .x = (long double)f_width, .y = 0.0 },
+            .LD = { .x = 0.0, .y = (long double)f_height },
+            .RD = { .x = (long double)f_width, .y = (long double)f_height }
+        };
 
-    P2Coefs(&im, &per, &m);
+        P2Coefs(&im, &per, &m);
 
-    printf("%.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
+        printf("%.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
 
-    int ptimg_size = f_width * f_height;
+        int ptimg_size = f_width * f_height;
 
-    unsigned char *ptimg = (unsigned char *) malloc(ptimg_size);
+        unsigned char *ptimg = (unsigned char *) malloc(ptimg_size);
 
-    if (ptimg == NULL) {
-        printf("Error alocando memoria\n");
-        exit(1);
-    }
+        if (ptimg == NULL) {
+            printf("Error alocando memoria\n");
+            exit(1);
+        }
 
-    for(unsigned char *p = ptimg; p != ptimg + ptimg_size; p++) {
-        *p = 255;
-    }
+        for(unsigned char *p = ptimg; p != ptimg + ptimg_size; p++) {
+            *p = 255;
+        }
 
-    int nwidth = IMAGE_WIDTH*channels;
+        int nwidth = IMAGE_WIDTH*channels;
 
-    int yme = (im.LU.y <= im.RU.y) ? im.LU.y : im.RU.y;
+        int yme = (im.LU.y <= im.RU.y) ? im.LU.y : im.RU.y;
 
-    int yma = (im.LD.y >= im.RD.y) ? im.LD.y : im.RD.y;
+        int yma = (im.LD.y >= im.RD.y) ? im.LD.y : im.RD.y;
 
-    for (int i = 0; i < IMAGE_HEIGHT; i++) {
-        for (int j = 0; j < nwidth; j += channels) {
-            if (j >= ((int)im.LD.x)*channels && j <= ((int)im.RD.x)*channels && i >= yme && i <= yma) {
-                int jj = j/channels;
-                double denom = (m[6]*jj + m[7]*i + m[8]);
-                int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
-                int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
-                if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
-                    ptimg[v*f_width + u] = (unsigned char)((img[i*nwidth + j] + img[i*nwidth + j + 1] + img[i*nwidth + j + 2])/3);
+        for (int i = 0; i < IMAGE_HEIGHT; i++) {
+            for (int j = 0; j < nwidth; j += channels) {
+                if (j >= ((int)im.LD.x)*channels && j <= ((int)im.RD.x)*channels && i >= yme && i <= yma) {
+                    int jj = j/channels;
+                    double denom = (m[6]*jj + m[7]*i + m[8]);
+                    int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
+                    int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
+                    if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
+                        ptimg[v*f_width + u] = (unsigned char)((img[i*nwidth + j] + img[i*nwidth + j + 1] + img[i*nwidth + j + 2])/3);
+                    }
                 }
             }
         }
-    }
 
-    unsigned char prev = 0;
+        unsigned char prev = 0;
 
-    for (unsigned char *p = ptimg; p < ptimg + ptimg_size; p++) {
-        if (*p == 0) {
-            *p = prev;
-        } else {
-            prev = *p;
+        for (unsigned char *p = ptimg; p < ptimg + ptimg_size; p++) {
+            if (*p == 0) {
+                *p = prev;
+            } else {
+                prev = *p;
+            }
         }
-    }
 
-    t = clock() - t;
-    double time_taken = ((double)t)/CLOCKS_PER_SEC;
-    printf("Tardo %f segundos en procesar.\n", time_taken);
-    printf("FPS: %f.\n", 1/(time_taken));
+        char *param1 = "1";
+        char *param2 = "1";
+        char *param3 = "1";
+        char *param4 = "1";
+        char *param5 = "1";
+        char *param6 = "1";
+        char *param7 = "1";
+        char *param8 = "1";
+        char *param9 = "1";
+        char *param10 = "1";
+
+        // Construir el comando para ejecutar el script de Python
+        char command[256];
+        snprintf(command, sizeof(command), "aleds/bin/python3 leds.py %s %s %s %s %s %s %s %s %s %s", param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
+
+        // Ejecutar el comando
+        system(command);
+
+        t = clock() - t;
+        double time_taken = ((double)t)/CLOCKS_PER_SEC;
+        printf("Tardo %f segundos en procesar.\n", time_taken);
+        printf("FPS: %f.\n", 1/(time_taken));
+    }
 
     printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
     stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
