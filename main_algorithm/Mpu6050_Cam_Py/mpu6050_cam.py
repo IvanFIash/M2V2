@@ -8,7 +8,7 @@ def get_angle_from_accelerometer():
 
 # Inicializar la cámara
 picam2 = Picamera2()
-picam2.configure(picam2.create_still_configuration(main={"size": (1280, 720)}))
+picam2.configure(picam2.create_still_configuration(main={"size": (1280, 720), "format": "JPEG"}))
 
 for i in range(10):
     start = time.time()
