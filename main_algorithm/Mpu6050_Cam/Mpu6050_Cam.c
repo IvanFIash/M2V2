@@ -623,7 +623,7 @@ int main()
 
 
     // Liberar recursos
-    free(decoded_img);
+    free(img);
     munmap(buffer, buf.length);
     close(fd);
 
