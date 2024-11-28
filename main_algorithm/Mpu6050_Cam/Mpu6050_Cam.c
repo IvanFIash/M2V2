@@ -456,6 +456,8 @@ int main()
 
     memcpy(img, buffer, buf.bytesused);
 
+    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, img, 100);
+
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
     Section im = {
