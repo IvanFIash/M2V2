@@ -466,9 +466,9 @@ int main()
         close(fd);
         return 1;
     }
-    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", IMAGE_WIDTH, IMAGE_HEIGHT);
+    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", ws, hs);
 
-    stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, decoded_img, 100);
+    stbi_write_jpg("img.jpg", ws, hs, 1, decoded_img, 100);
 
     printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
