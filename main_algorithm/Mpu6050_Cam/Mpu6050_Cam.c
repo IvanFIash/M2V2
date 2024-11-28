@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <linux/videodev2.h>
 #include <sys/mman.h>
+#include <time.h>
 
 /* MPU6050 */
 #define MPU6050_I2C_DEVICE_ADDRESS     0x68
@@ -31,8 +32,8 @@
 /* To restrict roll instead of pitch to ±90 degrees, comment out the following line */
 #define PITCH_RESTRICT_90_DEG
 
-#define IMAGE_WIDTH 2560
-#define IMAGE_HEIGHT 1440
+#define IMAGE_WIDTH 1280
+#define IMAGE_HEIGHT 720
 
 /* MPU6050 variables */
 int gyro_device_handler;
@@ -307,6 +308,9 @@ int main()
         return 1;
     }
 
+    clock_t t;
+    t = clock();
+
     // Poner el buffer en cola
     if (ioctl(fd, VIDIOC_QBUF, &buf) == -1) {
         perror("Error al poner el buffer en cola");
@@ -322,6 +326,14 @@ int main()
         return 1;
     }
 
+    printf("Imagen guardada como 'captura.jpg'\n");
+    printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
+
+    t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+    printf("Tardo %f segundos en procesar.\n", time_taken);
+    printf("FPS: %f.\n", 1/(time_taken));
+
     // Guardar los datos capturados (ya en formato JPEG) en un archivo
     FILE *file = fopen("captura.jpg", "wb");
     if (!file) {
@@ -331,11 +343,12 @@ int main()
         return 1;
     }
 
+    t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+    printf("Tardo %f segundos en guardar la imgajen.\n", time_taken);
+
     fwrite(buffer, buf.bytesused, 1, file);
     fclose(file);
-
-    printf("Imagen guardada como 'captura.jpg'\n");
-    printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
     // Liberar recursos
     munmap(buffer, buf.length);
