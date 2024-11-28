@@ -24,6 +24,20 @@
 /* To restrict roll instead of pitch to ±90 degrees, comment out the following line */
 #define PITCH_RESTRICT_90_DEG
 
+/* AK8963 (Magnetometer) */
+#define AK8963_I2C_DEVICE_ADDRESS      0x0C
+#define AK8963_REGISTER_CNTL1          0x0A  /* Control register 1 */
+#define AK8963_REGISTER_HXL            0x03  /* Magnetometer data start register */
+#define AK8963_MODE_CONTINUOUS_8HZ     0x02  /* Continuous measurement mode at 8Hz */
+#define AK8963_MODE_CONTINUOUS_100HZ   0x06  /* Continuous measurement mode at 100Hz */
+#define AK8963_REGISTER_ST1            0x02  /* Status register 1 */
+
+/* Magnetometer Variables */
+int mag_device_handler;
+double magX;
+double magY;
+double magZ;
+
 /* MPU6050 variables */
 int gyro_device_handler;
 double accX;
@@ -202,6 +216,47 @@ void Gyro(double* roll_p, double* pitch_p){
     *pitch_p = pitch_kalman;
 }
 
+/* Function to initialize the magnetometer */
+void init_magnetometer() {
+    // Enable I2C bypass mode on MPU9250
+    wiringPiI2CWriteReg8(gyro_device_handler, 0x37, 0x02);  // INT_PIN_CFG register
+    delay(10);
+
+    // Initialize the AK8963 magnetometer
+    mag_device_handler = wiringPiI2CSetup(AK8963_I2C_DEVICE_ADDRESS);
+    wiringPiI2CWriteReg8(mag_device_handler, AK8963_REGISTER_CNTL1, AK8963_MODE_CONTINUOUS_8HZ);
+    delay(10);
+}
+
+/* Function to read data from the magnetometer */
+void read_magnetometer_data() {
+    int magX_low, magX_high, magY_low, magY_high, magZ_low, magZ_high;
+
+    // Wait for data to be ready
+    if (!(wiringPiI2CReadReg8(mag_device_handler, AK8963_REGISTER_ST1) & 0x01)) {
+        return;
+    }
+
+    // Read magnetometer data
+    magX_low  = wiringPiI2CReadReg8(mag_device_handler, AK8963_REGISTER_HXL);
+    magX_high = wiringPiI2CReadReg8(mag_device_handler, AK8963_REGISTER_HXL + 1);
+    magY_low  = wiringPiI2CReadReg8(mag_device_handler, AK8963_REGISTER_HXL + 2);
+    magY_high = wiringPiI2CReadReg8(mag_device_handler, AK8963_REGISTER_HXL + 3);
+    magZ_low  = wiringPiI2CReadReg8(mag_device_handler, AK8963_REGISTER_HXL + 4);
+    magZ_high = wiringPiI2CReadReg8(mag_device_handler, AK8963_REGISTER_HXL + 5);
+
+    // Combine high and low bytes
+    magX = ((magX_high << 8) | magX_low);
+    magY = ((magY_high << 8) | magY_low);
+    magZ = ((magZ_high << 8) | magZ_low);
+
+    // Apply two's complement adjustment
+    if (magX >= 0x8000) magX -= 65536;
+    if (magY >= 0x8000) magY -= 65536;
+    if (magZ >= 0x8000) magZ -= 65536;
+}
+
+
 int main()
 {
     gyro_device_handler = wiringPiI2CSetup(MPU6050_I2C_DEVICE_ADDRESS);
@@ -210,12 +265,16 @@ int main()
     /* Wait for sensor to stabilize */
     delay(150);
 
+    init_magnetometer();
+
     double roll_p;
     double pitch_p;
 
     while(1){
         Gyro(&roll_p, &pitch_p);
+        read_magnetometer_data();
         printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
+        printf("MagX: %.4f, MagY: %.4f, MagZ: %.4f\n", magX, magY, magZ);
     }
 
 }
