@@ -226,6 +226,9 @@ void init_magnetometer() {
     mag_device_handler = wiringPiI2CSetup(AK8963_I2C_DEVICE_ADDRESS);
     wiringPiI2CWriteReg8(mag_device_handler, AK8963_REGISTER_CNTL1, AK8963_MODE_CONTINUOUS_8HZ);
     delay(10);
+
+    int who_am_i = wiringPiI2CReadReg8(mag_device_handler, 0x00);
+    printf("AK8963 WHO_AM_I: 0x%02X\n", who_am_i);
 }
 
 /* Function to read data from the magnetometer */
