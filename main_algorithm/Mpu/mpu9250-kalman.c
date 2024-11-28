@@ -221,14 +221,14 @@ void init_magnetometer() {
     // Enable I2C bypass mode on MPU9250
     wiringPiI2CWriteReg8(gyro_device_handler, 0x37, 0x02);  // INT_PIN_CFG register
     delay(10);
+    int who_am_i = wiringPiI2CReadReg8(mag_device_handler, 0x00);
+    printf("AK8963 WHO_AM_I: 0x%02X\n", who_am_i);
 
     // Initialize the AK8963 magnetometer
     mag_device_handler = wiringPiI2CSetup(AK8963_I2C_DEVICE_ADDRESS);
     wiringPiI2CWriteReg8(mag_device_handler, AK8963_REGISTER_CNTL1, AK8963_MODE_CONTINUOUS_8HZ);
     delay(10);
 
-    int who_am_i = wiringPiI2CReadReg8(mag_device_handler, 0x00);
-    printf("AK8963 WHO_AM_I: 0x%02X\n", who_am_i);
 }
 
 /* Function to read data from the magnetometer */
@@ -264,6 +264,8 @@ int main()
 {
     gyro_device_handler = wiringPiI2CSetup(MPU6050_I2C_DEVICE_ADDRESS);
     wiringPiI2CWriteReg8(gyro_device_handler,REGISTER_FOR_POWER_MANAGEMENT,SLEEP_MODE_DISABLED);
+    int mpu_who_am_i = wiringPiI2CReadReg8(gyro_device_handler, 0x75);
+    printf("MPU9250 WHO_AM_I: 0x%02X\n", mpu_who_am_i);
 
     /* Wait for sensor to stabilize */
     delay(150);
