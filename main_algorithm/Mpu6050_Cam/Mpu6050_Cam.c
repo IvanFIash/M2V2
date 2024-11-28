@@ -11,7 +11,6 @@
 #include <linux/videodev2.h>
 #include <sys/mman.h>
 #include <time.h>
-#include "jpeglib.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
