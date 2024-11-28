@@ -594,7 +594,7 @@ int main()
             }
         }
 
-        char param1 = '1';
+        /*char param1 = '1';
         char param2 = '1';
         char param3 = '1';
         char param4 = '1';
@@ -606,11 +606,11 @@ int main()
         char param10 = '1';
 
         // Construir el comando para ejecutar el script de Python
-        char command[256*5];
+        char command[256];
         snprintf(command, sizeof(command), "aleds/bin/python3 leds.py %s %s %s %s %s %s %s %s %s %s", param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
 
         // Ejecutar el comando
-        system(command);
+        system(command);*/
 
         t = clock() - t;
         double time_taken = ((double)t)/CLOCKS_PER_SEC;
