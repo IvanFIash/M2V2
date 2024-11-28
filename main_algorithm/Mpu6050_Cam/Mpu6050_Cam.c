@@ -41,6 +41,7 @@
 #define IMAGE_WIDTH 1280
 #define IMAGE_HEIGHT 720
 
+#define channels 3
 #define f_img_per 100
 
 /* MPU6050 variables */
@@ -496,7 +497,7 @@ int main()
                 int u = (int)((m[0]*jj + m[1]*i + m[2])/denom);
                 int v = (int)((m[3]*jj + m[4]*i + m[5])/denom);
                 if (u >= 0 && u < f_width && v >= 0 && v < f_height) {
-                    ptimg[v*f_width + u] = (unsigned char)((img[i*nwidth + j] + img[i*nwidth + j + 1] + img[i*nwidth + j + 2])/3);
+                    ptimg[v*f_width + u] = (unsigned char)((buffer[i*nwidth + j] + buffer[i*nwidth + j + 1] + buffer[i*nwidth + j + 2])/3);
                 }
             }
         }
