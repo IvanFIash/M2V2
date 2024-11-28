@@ -3,8 +3,7 @@ import subprocess
 
 def get_angle_from_accelerometer():
     result = subprocess.run(["./mpu6050-kalman"], capture_output=True, text=True)
-    print(result)
-    return float(result.stdout.strip())
+    return result.stdout.strip().split()
 
 # Inicializar la cámara
 picam2 = Picamera2()
@@ -18,4 +17,6 @@ picam2.stop()
 print("Foto tomada y guardada como 'photo.jpg'.")
 
 # Calcular el ángulo usando el acelerómetro
-angle = get_angle_from_accelerometer()
+angles = get_angle_from_accelerometer()
+
+print(f"Roll: {float(angles[0])}, Pitch: {float(angles[1])}")
