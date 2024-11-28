@@ -605,12 +605,13 @@ int main()
         char param9 = '1';
         char param10 = '1';
 
-        // Construir el comando para ejecutar el script de Python
+        // Construir el comando
         char command[256];
-        snprintf(command, sizeof(command), "aleds/bin/python3 leds.py %s %s %s %s %s %s %s %s %s %s", param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
+        snprintf(command, sizeof(command), "aleds/bin/python3 leds.py %c %c %c %c %c %c %c %c %c %c",
+                param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
 
-        /*// Ejecutar el comando
-        system(command);*/
+        // Ejecutar el comando
+        system(command);
 
         t = clock() - t;
         double time_taken = ((double)t)/CLOCKS_PER_SEC;
