@@ -389,86 +389,86 @@ int main()
     double roll_p;
     double pitch_p;
 
-    const char *device = "/dev/video0";
-    int fd = open(device, O_RDWR);
-    if (fd == -1) {
-        perror("Error al abrir el dispositivo de video");
-        return 1;
-    }
-
-    // Consultar capacidades del dispositivo
-    struct v4l2_capability cap;
-    if (ioctl(fd, VIDIOC_QUERYCAP, &cap) == -1) {
-        perror("Error al consultar capacidades del dispositivo");
-        close(fd);
-        return 1;
-    }
-
-    // Configurar formato de video
-    struct v4l2_format fmt;
-    memset(&fmt, 0, sizeof(fmt));
-    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    fmt.fmt.pix.width = IMAGE_WIDTH;
-    fmt.fmt.pix.height = IMAGE_HEIGHT;
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG; // Formato MJPEG
-    fmt.fmt.pix.field = V4L2_FIELD_NONE;
-
-    if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1) {
-        perror("Error al configurar el formato de video");
-        close(fd);
-        return 1;
-    }
-
-    // Solicitar buffers de memoria
-    struct v4l2_requestbuffers req;
-    memset(&req, 0, sizeof(req));
-    req.count = 1;  // Usar un solo buffer
-    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    req.memory = V4L2_MEMORY_MMAP;
-
-    if (ioctl(fd, VIDIOC_REQBUFS, &req) == -1) {
-        perror("Error al solicitar buffers");
-        close(fd);
-        return 1;
-    }
-
-    // Mapear el buffer
-    struct v4l2_buffer buf;
-    memset(&buf, 0, sizeof(buf));
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.memory = V4L2_MEMORY_MMAP;
-    buf.index = 0;
-
-    if (ioctl(fd, VIDIOC_QUERYBUF, &buf) == -1) {
-        perror("Error al consultar buffer");
-        close(fd);
-        return 1;
-    }
-
-    unsigned char *buffer = (unsigned char*)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
-    if (buffer == MAP_FAILED) {
-        perror("Error al mapear buffer");
-        close(fd);
-        return 1;
-    }
-
-    // Iniciar la captura de video
-    if (ioctl(fd, VIDIOC_STREAMON, &buf.type) == -1) {
-        perror("Error al iniciar la transmisión");
-        close(fd);
-        return 1;
-    }
-
-    Section org_im = {
-        .LU = { .x = 255.0, .y = 458.0 },
-        .RU = { .x = 323.0, .y = 458.0 },
-        .LD = { .x = 143.0, .y = 633.0 },
-        .RD = { .x = 418.0, .y = 633.0 }
-    };
-
-    long double m[9];
-
     while(1){
+        const char *device = "/dev/video0";
+        int fd = open(device, O_RDWR);
+        if (fd == -1) {
+            perror("Error al abrir el dispositivo de video");
+            return 1;
+        }
+
+        // Consultar capacidades del dispositivo
+        struct v4l2_capability cap;
+        if (ioctl(fd, VIDIOC_QUERYCAP, &cap) == -1) {
+            perror("Error al consultar capacidades del dispositivo");
+            close(fd);
+            return 1;
+        }
+
+        // Configurar formato de video
+        struct v4l2_format fmt;
+        memset(&fmt, 0, sizeof(fmt));
+        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        fmt.fmt.pix.width = IMAGE_WIDTH;
+        fmt.fmt.pix.height = IMAGE_HEIGHT;
+        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG; // Formato MJPEG
+        fmt.fmt.pix.field = V4L2_FIELD_NONE;
+
+        if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1) {
+            perror("Error al configurar el formato de video");
+            close(fd);
+            return 1;
+        }
+
+        // Solicitar buffers de memoria
+        struct v4l2_requestbuffers req;
+        memset(&req, 0, sizeof(req));
+        req.count = 1;  // Usar un solo buffer
+        req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        req.memory = V4L2_MEMORY_MMAP;
+
+        if (ioctl(fd, VIDIOC_REQBUFS, &req) == -1) {
+            perror("Error al solicitar buffers");
+            close(fd);
+            return 1;
+        }
+
+        // Mapear el buffer
+        struct v4l2_buffer buf;
+        memset(&buf, 0, sizeof(buf));
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.index = 0;
+
+        if (ioctl(fd, VIDIOC_QUERYBUF, &buf) == -1) {
+            perror("Error al consultar buffer");
+            close(fd);
+            return 1;
+        }
+
+        unsigned char *buffer = (unsigned char*)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+        if (buffer == MAP_FAILED) {
+            perror("Error al mapear buffer");
+            close(fd);
+            return 1;
+        }
+
+        // Iniciar la captura de video
+        if (ioctl(fd, VIDIOC_STREAMON, &buf.type) == -1) {
+            perror("Error al iniciar la transmisión");
+            close(fd);
+            return 1;
+        }
+
+        Section org_im = {
+            .LU = { .x = 255.0, .y = 458.0 },
+            .RU = { .x = 323.0, .y = 458.0 },
+            .LD = { .x = 143.0, .y = 633.0 },
+            .RD = { .x = 418.0, .y = 633.0 }
+        };
+
+        long double m[9];
+
         clock_t t;
         t = clock();
 
@@ -629,8 +629,8 @@ int main()
 
         // Liberar recursos
         free(img);
+        munmap(buffer, buf.length);
+        close(fd);
     }
-    munmap(buffer, buf.length);
-    close(fd);
 
 }
