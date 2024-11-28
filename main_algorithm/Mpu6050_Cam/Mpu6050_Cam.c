@@ -254,7 +254,7 @@ int set_control(int fd, int control_id, int value, const char *control_name) {
 }
 
 // Decodifica un buffer MJPEG a RGB
-int decode_mjpeg_to_rgb(unsigned char *mjpeg_data, size_t mjpeg_size, unsigned char *rgb_data, int *width, int *height) {
+/*int decode_mjpeg_to_rgb(unsigned char *mjpeg_data, size_t mjpeg_size, unsigned char *rgb_data, int *width, int *height) {
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
 
@@ -288,7 +288,7 @@ int decode_mjpeg_to_rgb(unsigned char *mjpeg_data, size_t mjpeg_size, unsigned c
     jpeg_destroy_decompress(&cinfo);
 
     return 0; // Decodificación exitosa
-}
+}*/
 
 
 // Función para resolver un sistema de ecuaciones lineales usando factorización LU
