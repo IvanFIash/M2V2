@@ -516,7 +516,7 @@ int main()
         return 1;
     }
 
-    int result = decode_mjpeg_to_rgb(buffer, buf.bytesused, img, &ws, &hs);
+    int result = decode_mjpeg_to_rgb(buffer, buf.length, img, &ws, &hs);
     if (result != 0) {
         fprintf(stderr, "Error decodificando MJPEG a RGB\n");
         free(img);
