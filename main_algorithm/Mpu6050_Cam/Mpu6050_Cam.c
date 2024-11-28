@@ -607,7 +607,7 @@ int main()
 
         // Construir el comando
         char command[256];
-        snprintf(command, sizeof(command), "aleds/bin/python3 leds.py %c %c %c %c %c %c %c %c %c %c",
+        snprintf(command, sizeof(command), "sudo aleds/bin/python3 leds.py %c %c %c %c %c %c %c %c %c %c",
                 param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
 
         // Ejecutar el comando
