@@ -8,4 +8,4 @@ pixels = neopixel.NeoPixel(board.D18, 10, brightness=0.5, pixel_order=neopixel.G
 pixels[0] = (255, 0, 0, 0)  # (R, G, B, W)
 
 # Encender un LED con blanco cálido
-pixels[1] = (0, 0, 0, 255)
+pixels[1] = (0, 0, 255, 0)
