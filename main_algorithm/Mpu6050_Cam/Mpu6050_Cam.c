@@ -491,7 +491,7 @@ int main()
     }
 
     for(unsigned char *p = ptimg; p != ptimg + ptimg_size; p++) {
-        *p = 0;
+        *p = 255;
     }
 
     int nwidth = IMAGE_WIDTH*channels;
