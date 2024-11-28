@@ -2,7 +2,7 @@ from picamera2 import Picamera2
 import subprocess
 
 def get_angle_from_accelerometer():
-    result = subprocess.run(["./calcular_angulo"], capture_output=True, text=True)
+    result = subprocess.run(["./mpu6050-kalman"], capture_output=True, text=True)
     print(result)
     return float(result.stdout.strip())
 
