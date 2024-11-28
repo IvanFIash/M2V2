@@ -616,20 +616,20 @@ int main()
         double time_taken = ((double)t)/CLOCKS_PER_SEC;
         printf("Tardo %f segundos en procesar.\n", time_taken);
         printf("FPS: %f.\n", 1/(time_taken));
+
+        printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
+        stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
+
+        free(ptimg);
+
+        t = clock() - t;
+        time_taken = ((double)t)/CLOCKS_PER_SEC;
+        printf("Tardo %f segundos en guardar la imgajen.\n", time_taken);
+
+
+        // Liberar recursos
+        free(img);
     }
-
-    printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
-    stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
-
-    free(ptimg);
-
-    t = clock() - t;
-    time_taken = ((double)t)/CLOCKS_PER_SEC;
-    printf("Tardo %f segundos en guardar la imgajen.\n", time_taken);
-
-
-    // Liberar recursos
-    free(img);
     munmap(buffer, buf.length);
     close(fd);
 
