@@ -463,7 +463,7 @@ int main()
         close(fd);
         return 1;
     }
-    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", f_width, f_height);
+    printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", IMAGE_WIDTH, IMAGE_HEIGHT);
 
     stbi_write_jpg("img.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 1, decoded_img, 100);
 
