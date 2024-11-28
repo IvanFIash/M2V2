@@ -594,16 +594,16 @@ int main()
             }
         }
 
-        char *param1 = "1";
-        char *param2 = "1";
-        char *param3 = "1";
-        char *param4 = "1";
-        char *param5 = "1";
-        char *param6 = "1";
-        char *param7 = "1";
-        char *param8 = "1";
-        char *param9 = "1";
-        char *param10 = "1";
+        char *param1 = '1';
+        char *param2 = '1';
+        char *param3 = '1';
+        char *param4 = '1';
+        char *param5 = '1';
+        char *param6 = '1';
+        char *param7 = '1';
+        char *param8 = '1';
+        char *param9 = '1';
+        char *param10 = '1';
 
         // Construir el comando para ejecutar el script de Python
         char command[256];
