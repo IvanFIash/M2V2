@@ -621,6 +621,8 @@ int main()
         printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
         stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
 
+        printf("No lines detected");
+
         free(ptimg);
 
         t = clock() - t;
