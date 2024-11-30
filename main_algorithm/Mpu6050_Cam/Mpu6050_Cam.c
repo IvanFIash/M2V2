@@ -489,7 +489,7 @@ int main()
         }
 
         // Guardar los datos capturados (ya en formato JPEG) en un archivo
-        FILE *file = fopen("captura.jpg", "wb");
+        /*FILE *file = fopen("captura.jpg", "wb");
         if (!file) {
             perror("Error al abrir el archivo para guardar la imagen");
             munmap(buffer, buf.length);
@@ -499,14 +499,7 @@ int main()
         printf("Imagen guardada como 'captura.jpg'\n");
 
         fwrite(buffer, buf.bytesused, 1, file);
-        fclose(file);/*
-
-        unsigned char *img = stbi_load("captura.jpg", &ws, &hs, &ch, 0);
-
-        if (img == NULL) {
-            printf("Error\n");
-            exit(1);
-        }*/
+        fclose(file);*/
 
         unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
         if (!img) {
@@ -524,18 +517,7 @@ int main()
             return 1;
         }
 
-        stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
-
-        /*memcpy(img, buffer, buf.bytesused);*/
-
-        /*unsigned char *decoded_img = (unsigned char*)stbi_load_from_memory((unsigned char*)buffer, ws*hs*3, &ws, &hs, &ch, 3);
-        if (!decoded_img) {
-            fprintf(stderr, "Error al decodificar los datos JPEG\n");
-            munmap(buffer, buf.length);
-            close(fd);
-            return 1;
-        }
-        printf("La imagen decodificada tiene ancho: %dpx, alto: %dpx\n", ws, hs);*/
+        //stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
 
         printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
