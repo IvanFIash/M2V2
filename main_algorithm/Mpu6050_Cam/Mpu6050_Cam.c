@@ -525,10 +525,7 @@ int main()
             return 1;
         }
 
-        // Apply gamma correction
-        //process_buffer(img, IMAGE_WIDTH * IMAGE_HEIGHT * 3, linear_rgb);
-
-        stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_WIDTH, 3, img, 100);
+        stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
 
         /*memcpy(img, buffer, buf.bytesused);*/
 
