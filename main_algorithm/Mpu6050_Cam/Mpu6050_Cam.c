@@ -409,7 +409,7 @@ int main()
     double roll_p;
     double pitch_p;
 
-    while(rep = 0){
+    while(rep == 0){
         rep ++;
         const char *device = "/dev/video0";
         int fd = open(device, O_RDWR);
