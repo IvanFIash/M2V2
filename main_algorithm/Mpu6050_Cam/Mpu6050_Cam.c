@@ -68,6 +68,8 @@ int ws = 1280;
 int hs = 720;
 int ch = 3;
 
+int rep = 0;
+
 typedef struct {
     long double x;
     long double y;
@@ -378,6 +380,24 @@ void P2Coefs(Section *source, Section *dest, long double (*m)[9]) {
     (*m)[8] = 1.0;
 }
 
+// Gamma correction function
+unsigned char to_linear(unsigned char srgb) {
+    double normalized = srgb / 255.0;
+    double linear;
+    if (normalized <= 0.04045)
+        linear = normalized / 12.92;
+    else
+        linear = pow((normalized + 0.055) / 1.055, 2.4);
+    return (unsigned char)(linear * 255);
+}
+
+// Process raw RGB buffer
+void process_buffer(unsigned char *buffer, size_t length, unsigned char *linear_buffer) {
+    for (size_t i = 0; i < length; i++) {
+        linear_buffer[i] = to_linear(buffer[i]);
+    }
+}
+
 int main()
 {
     gyro_device_handler = wiringPiI2CSetup(MPU6050_I2C_DEVICE_ADDRESS);
@@ -389,7 +409,8 @@ int main()
     double roll_p;
     double pitch_p;
 
-    while(1){
+    while(rep = 0){
+        rep ++;
         const char *device = "/dev/video0";
         int fd = open(device, O_RDWR);
         if (fd == -1) {
@@ -515,14 +536,7 @@ int main()
             return 1;
         }
 
-        for (int y = 0; y < IMAGE_HEIGHT; y++){
-            unsigned char* pixel_row = (unsigned char*)(buffer[0]);
-            for (int x = 0; x < IMAGE_WIDTH; x++){
-                img[y*IMAGE_WIDTH + x] = (unsigned char)((*pixel_row) / 255);
-                img[y*IMAGE_WIDTH + x + 1] = (unsigned char)((*pixel_row + 1) / 255);
-                img[y*IMAGE_WIDTH + x + 2] = (unsigned char)((*pixel_row + 2) / 255);
-            }
-        }
+        process_buffer(buffer, buf.length, img);
 
         stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_WIDTH, 3, img, 100);
 
