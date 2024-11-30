@@ -11,6 +11,7 @@
 #include <linux/videodev2.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <jpeglib.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -255,8 +256,8 @@ int set_control(int fd, int control_id, int value, const char *control_name) {
     return 0;
 }
 
-// Decodifica un buffer MJPEG a RGB
-/*int decode_mjpeg_to_rgb(unsigned char *mjpeg_data, size_t mjpeg_size, unsigned char *rgb_data, int *width, int *height) {
+// Function to decode MJPEG to RGB using libjpeg
+int decode_mjpeg_to_rgb(unsigned char *mjpeg_data, size_t mjpeg_size, unsigned char *rgb_buffer) {
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
 
@@ -264,33 +265,29 @@ int set_control(int fd, int control_id, int value, const char *control_name) {
     jpeg_create_decompress(&cinfo);
 
     jpeg_mem_src(&cinfo, mjpeg_data, mjpeg_size);
-
     if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
-        fprintf(stderr, "Error leyendo el encabezado JPEG\n");
-        jpeg_destroy_decompress(&cinfo);
+        fprintf(stderr, "Error reading JPEG header\n");
         return -1;
     }
 
     jpeg_start_decompress(&cinfo);
 
-    if (cinfo.output_width != *width || cinfo.output_height != *height) {
-        fprintf(stderr, "Las dimensiones de la imagen no coinciden (%dx%d vs %dx%d)\n",
-                cinfo.output_width, cinfo.output_height, *width, *height);
-        *width = cinfo.output_width;
-        *height = cinfo.output_height;
+    if (cinfo.output_width != IMAGE_WIDTH || cinfo.output_height != IMAGE_HEIGHT) {
+        fprintf(stderr, "Unexpected image dimensions: %dx%d\n",
+                cinfo.output_width, cinfo.output_height);
+        return -1;
     }
 
-    int row_stride = cinfo.output_width * cinfo.output_components; // Ancho en bytes por fila
     while (cinfo.output_scanline < cinfo.output_height) {
-        unsigned char *row_pointer = rgb_data + cinfo.output_scanline * row_stride;
+        unsigned char *row_pointer = rgb_buffer + cinfo.output_scanline * cinfo.output_width * 3;
         jpeg_read_scanlines(&cinfo, &row_pointer, 1);
     }
 
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
 
-    return 0; // Decodificación exitosa
-}*/
+    return 0;
+}
 
 
 // Función para resolver un sistema de ecuaciones lineales usando factorización LU
@@ -380,54 +377,6 @@ void P2Coefs(Section *source, Section *dest, long double (*m)[9]) {
     (*m)[8] = 1.0;
 }
 
-// Gamma correction function
-unsigned char to_linear(unsigned char srgb) {
-    double normalized = srgb / 255.0;
-    double linear;
-    if (normalized <= 0.04045)
-        linear = normalized / 12.92;
-    else
-        linear = pow((normalized + 0.055) / 1.055, 2.4);
-    return (unsigned char)(linear * 255);
-}
-
-// Convert YUYV to RGB
-void yuyv_to_rgb(unsigned char *yuyv, unsigned char *rgb, size_t width, size_t height) {
-    for (size_t i = 0; i < width * height; i += 2) {
-        int y1 = yuyv[2 * i];
-        int u = yuyv[2 * i + 1];
-        int y2 = yuyv[2 * i + 2];
-        int v = yuyv[2 * i + 3];
-
-        int c1 = y1 - 16;
-        int c2 = y2 - 16;
-        int d = u - 128;
-        int e = v - 128;
-
-        int r1 = (298 * c1 + 409 * e + 128) >> 8;
-        int g1 = (298 * c1 - 100 * d - 208 * e + 128) >> 8;
-        int b1 = (298 * c1 + 516 * d + 128) >> 8;
-
-        int r2 = (298 * c2 + 409 * e + 128) >> 8;
-        int g2 = (298 * c2 - 100 * d - 208 * e + 128) >> 8;
-        int b2 = (298 * c2 + 516 * d + 128) >> 8;
-
-        rgb[3 * i] = (unsigned char)fmin(fmax(r1, 0), 255);
-        rgb[3 * i + 1] = (unsigned char)fmin(fmax(g1, 0), 255);
-        rgb[3 * i + 2] = (unsigned char)fmin(fmax(b1, 0), 255);
-
-        rgb[3 * (i + 1)] = (unsigned char)fmin(fmax(r2, 0), 255);
-        rgb[3 * (i + 1) + 1] = (unsigned char)fmin(fmax(g2, 0), 255);
-        rgb[3 * (i + 1) + 2] = (unsigned char)fmin(fmax(b2, 0), 255);
-    }
-}
-
-// Process raw RGB buffer with gamma correction
-void process_buffer(unsigned char *rgb, size_t length, unsigned char *linear_rgb) {
-    for (size_t i = 0; i < length; i++) {
-        linear_rgb[i] = to_linear(rgb[i]);
-    }
-}
 
 int main()
 {
@@ -442,7 +391,7 @@ int main()
 
     while(rep == 0){
         rep ++;
-        const char *device = "/dev/video1";
+        const char *device = "/dev/video0";
         int fd = open(device, O_RDWR);
         if (fd == -1) {
             perror("Error al abrir el dispositivo de video");
@@ -463,7 +412,7 @@ int main()
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         fmt.fmt.pix.width = IMAGE_WIDTH;
         fmt.fmt.pix.height = IMAGE_HEIGHT;
-        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV; // Formato MJPEG
+        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG; // Formato MJPEG
         fmt.fmt.pix.field = V4L2_FIELD_NONE;
 
         if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1) {
@@ -568,7 +517,13 @@ int main()
         }
 
         // Convert YUYV to RGB
-        yuyv_to_rgb(buffer, img, IMAGE_WIDTH, IMAGE_HEIGHT);
+        if (decode_mjpeg_to_rgb(buffer, buf.bytesused, img) == -1) {
+            fprintf(stderr, "Error decoding MJPEG frame\n");
+            free(img);
+            munmap(buffer, buf.length);
+            close(fd);
+            return 1;
+        }
 
         // Apply gamma correction
         //process_buffer(img, IMAGE_WIDTH * IMAGE_HEIGHT * 3, linear_rgb);
