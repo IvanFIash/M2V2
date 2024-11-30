@@ -518,9 +518,9 @@ int main()
         for (int y = 0; y < IMAGE_HEIGHT; y++){
             unsigned char* pixel_row = (unsigned char*)(buffer[0]);
             for (int x = 0; x < IMAGE_WIDTH; x++){
-                img[y*IMAGE_WIDTH + x] = (unsigned char)((*pixel_row) / 255)
-                img[y*IMAGE_WIDTH + x + 1] = (unsigned char)((*pixel_row + 1) / 255)
-                img[y*IMAGE_WIDTH + x + 2] = (unsigned char)((*pixel_row + 2) / 255)
+                img[y*IMAGE_WIDTH + x] = (unsigned char)((*pixel_row) / 255);
+                img[y*IMAGE_WIDTH + x + 1] = (unsigned char)((*pixel_row + 1) / 255);
+                img[y*IMAGE_WIDTH + x + 2] = (unsigned char)((*pixel_row + 2) / 255);
             }
         }
 
