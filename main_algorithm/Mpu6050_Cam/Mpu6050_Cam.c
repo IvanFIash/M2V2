@@ -488,7 +488,7 @@ int main()
         }
 
         // Guardar los datos capturados (ya en formato JPEG) en un archivo
-        FILE *file = fopen("captura.jpg", "wb");
+        /*FILE *file = fopen("captura.jpg", "wb");
         if (!file) {
             perror("Error al abrir el archivo para guardar la imagen");
             munmap(buffer, buf.length);
@@ -505,9 +505,9 @@ int main()
         if (img == NULL) {
             printf("Error\n");
             exit(1);
-        }
+        }*/
 
-        /*unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+        unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
         if (!img) {
             perror("Error al asignar memoria para la imagen");
             munmap(buffer, buf.length);
@@ -515,7 +515,18 @@ int main()
             return 1;
         }
 
-        memcpy(img, buffer, buf.bytesused);*/
+        for (int y = 0; y < IMAGE_HEIGHT; y++){
+            unsigned char* pixel_row = (unsigned char*)(buffer[0]);
+            for (int x = 0; x < IMAGE_WIDTH; x++){
+                img[y*IMAGE_WIDTH + x] = (unsigned char)((*pixel_row) / 255)
+                img[y*IMAGE_WIDTH + x + 1] = (unsigned char)((*pixel_row + 1) / 255)
+                img[y*IMAGE_WIDTH + x + 2] = (unsigned char)((*pixel_row + 2) / 255)
+            }
+        }
+
+        stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_WIDTH, 3, img, 100);
+
+        /*memcpy(img, buffer, buf.bytesused);*/
 
         /*unsigned char *decoded_img = (unsigned char*)stbi_load_from_memory((unsigned char*)buffer, ws*hs*3, &ws, &hs, &ch, 3);
         if (!decoded_img) {
