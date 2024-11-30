@@ -517,7 +517,7 @@ int main()
             return 1;
         }
 
-        //stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
+        stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
 
         printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
