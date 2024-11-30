@@ -489,7 +489,7 @@ int main()
         }
 
         // Guardar los datos capturados (ya en formato JPEG) en un archivo
-        /*FILE *file = fopen("captura.jpg", "wb");
+        FILE *file = fopen("captura.jpg", "wb");
         if (!file) {
             perror("Error al abrir el archivo para guardar la imagen");
             munmap(buffer, buf.length);
@@ -499,7 +499,7 @@ int main()
         printf("Imagen guardada como 'captura.jpg'\n");
 
         fwrite(buffer, buf.bytesused, 1, file);
-        fclose(file);
+        fclose(file);/*
 
         unsigned char *img = stbi_load("captura.jpg", &ws, &hs, &ch, 0);
 
@@ -516,7 +516,6 @@ int main()
             return 1;
         }
 
-        // Convert YUYV to RGB
         if (decode_mjpeg_to_rgb(buffer, buf.bytesused, img) == -1) {
             fprintf(stderr, "Error decoding MJPEG frame\n");
             free(img);
