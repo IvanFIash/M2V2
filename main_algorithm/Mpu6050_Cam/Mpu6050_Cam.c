@@ -783,26 +783,6 @@ int main()
         return 1;
     }
 
-    // Mapear el buffer
-    struct v4l2_buffer buf;
-    memset(&buf, 0, sizeof(buf));
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.memory = V4L2_MEMORY_MMAP;
-    buf.index = 0;
-
-    if (ioctl(fd, VIDIOC_QUERYBUF, &buf) == -1) {
-        perror("Error al consultar buffer");
-        close(fd);
-        return 1;
-    }
-
-    unsigned char *buffer = (unsigned char*)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
-    if (buffer == MAP_FAILED) {
-        perror("Error al mapear buffer");
-        close(fd);
-        return 1;
-    }
-
     Section org_im = {
         .LU = { .x = 255.0, .y = 458.0 },
         .RU = { .x = 323.0, .y = 458.0 },
@@ -865,6 +845,26 @@ int main()
 
     while(rep == 0){
         t = clock();
+
+        // Mapear el buffer
+        struct v4l2_buffer buf;
+        memset(&buf, 0, sizeof(buf));
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.index = 0;
+
+        if (ioctl(fd, VIDIOC_QUERYBUF, &buf) == -1) {
+            perror("Error al consultar buffer");
+            close(fd);
+            return 1;
+        }
+
+        unsigned char *buffer = (unsigned char*)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+        if (buffer == MAP_FAILED) {
+            perror("Error al mapear buffer");
+            close(fd);
+            return 1;
+        }
 
         // Iniciar la captura de video
         if (ioctl(fd, VIDIOC_STREAMON, &buf.type) == -1) {
