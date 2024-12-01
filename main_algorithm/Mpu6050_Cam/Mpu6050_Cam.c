@@ -42,7 +42,6 @@
 #define IMAGE_WIDTH 1280
 #define IMAGE_HEIGHT 720
 
-#define channels 3
 #define f_img_per 100
 
 /* MPU6050 variables */
@@ -66,6 +65,7 @@ double pitch_kalman;        /* Angle exposed to a Kalman filter */
 double pitch_complementary; /* Angle exposed to a Complementary filter */
 
 int rep = 0;
+int channels  = 3;
 
 typedef struct {
     long double x;
