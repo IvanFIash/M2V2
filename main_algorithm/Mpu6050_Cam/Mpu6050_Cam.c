@@ -472,10 +472,11 @@ int main()
         return 1;
     }
 
+    clock_t t;
+    double time_taken;
+
     while(rep == 0){
         rep ++;
-
-        clock_t t;
         t = clock();
 
         // Poner el buffer en cola
@@ -604,7 +605,7 @@ int main()
         system(command);
 
         t = clock() - t;
-        double time_taken = ((double)t)/CLOCKS_PER_SEC;
+        time_taken = ((double)t)/CLOCKS_PER_SEC;
         printf("Tardo %f segundos en procesar.\n", time_taken);
         printf("FPS: %f.\n", 1/(time_taken));
     }
@@ -614,7 +615,7 @@ int main()
 
     printf("No lane detected");
 
-    free(ptimg);
+    //free(ptimg);
 
     t = clock() - t;
     time_taken = ((double)t)/CLOCKS_PER_SEC;
