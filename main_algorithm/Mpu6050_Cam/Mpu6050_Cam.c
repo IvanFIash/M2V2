@@ -803,13 +803,6 @@ int main()
         return 1;
     }
 
-    // Iniciar la captura de video
-    if (ioctl(fd, VIDIOC_STREAMON, &buf.type) == -1) {
-        perror("Error al iniciar la transmisión");
-        close(fd);
-        return 1;
-    }
-
     Section org_im = {
         .LU = { .x = 255.0, .y = 458.0 },
         .RU = { .x = 323.0, .y = 458.0 },
@@ -873,6 +866,13 @@ int main()
     while(rep == 0){
         t = clock();
 
+        // Iniciar la captura de video
+        if (ioctl(fd, VIDIOC_STREAMON, &buf.type) == -1) {
+            perror("Error al iniciar la transmisión");
+            close(fd);
+            return 1;
+        }
+
         // Poner el buffer en cola
         if (ioctl(fd, VIDIOC_QBUF, &buf) == -1) {
             perror("Error al poner el buffer en cola");
@@ -905,6 +905,12 @@ int main()
             fprintf(stderr, "Error decoding MJPEG frame\n");
             free(img);
             munmap(buffer, buf.length);
+            close(fd);
+            return 1;
+        }
+
+        if (ioctl(fd, VIDIOC_STREAMOFF, &buf.type) == -1) {
+            perror("Error al iniciar la transmisión");
             close(fd);
             return 1;
         }
