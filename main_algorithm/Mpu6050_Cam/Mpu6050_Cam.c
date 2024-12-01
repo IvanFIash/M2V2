@@ -915,6 +915,8 @@ int main()
             return 1;
         }
 
+        munmap(buffer, buf.length);
+
         //stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
 
         printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
@@ -1046,7 +1048,7 @@ int main()
     free(dimg);
     free(nmsimg);
     free(hysimg);*/
-    munmap(buffer, buf.length);
+
     close(fd);
 
 }
