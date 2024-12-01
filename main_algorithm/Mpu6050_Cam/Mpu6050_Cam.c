@@ -65,10 +65,6 @@ double pitch_gyro;
 double pitch_kalman;        /* Angle exposed to a Kalman filter */
 double pitch_complementary; /* Angle exposed to a Complementary filter */
 
-int ws = 1280;
-int hs = 720;
-int ch = 3;
-
 int rep = 0;
 
 typedef struct {
@@ -389,86 +385,95 @@ int main()
     double roll_p;
     double pitch_p;
 
+    const char *device = "/dev/video0";
+    int fd = open(device, O_RDWR);
+    if (fd == -1) {
+        perror("Error al abrir el dispositivo de video");
+        return 1;
+    }
+
+    // Consultar capacidades del dispositivo
+    struct v4l2_capability cap;
+    if (ioctl(fd, VIDIOC_QUERYCAP, &cap) == -1) {
+        perror("Error al consultar capacidades del dispositivo");
+        close(fd);
+        return 1;
+    }
+
+    // Configurar formato de video
+    struct v4l2_format fmt;
+    memset(&fmt, 0, sizeof(fmt));
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    fmt.fmt.pix.width = IMAGE_WIDTH;
+    fmt.fmt.pix.height = IMAGE_HEIGHT;
+    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG; // Formato MJPEG
+    fmt.fmt.pix.field = V4L2_FIELD_NONE;
+
+    if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1) {
+        perror("Error al configurar el formato de video");
+        close(fd);
+        return 1;
+    }
+
+    // Solicitar buffers de memoria
+    struct v4l2_requestbuffers req;
+    memset(&req, 0, sizeof(req));
+    req.count = 1;  // Usar un solo buffer
+    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    req.memory = V4L2_MEMORY_MMAP;
+
+    if (ioctl(fd, VIDIOC_REQBUFS, &req) == -1) {
+        perror("Error al solicitar buffers");
+        close(fd);
+        return 1;
+    }
+
+    // Mapear el buffer
+    struct v4l2_buffer buf;
+    memset(&buf, 0, sizeof(buf));
+    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buf.memory = V4L2_MEMORY_MMAP;
+    buf.index = 0;
+
+    if (ioctl(fd, VIDIOC_QUERYBUF, &buf) == -1) {
+        perror("Error al consultar buffer");
+        close(fd);
+        return 1;
+    }
+
+    unsigned char *buffer = (unsigned char*)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+    if (buffer == MAP_FAILED) {
+        perror("Error al mapear buffer");
+        close(fd);
+        return 1;
+    }
+
+    // Iniciar la captura de video
+    if (ioctl(fd, VIDIOC_STREAMON, &buf.type) == -1) {
+        perror("Error al iniciar la transmisión");
+        close(fd);
+        return 1;
+    }
+
+    Section org_im = {
+        .LU = { .x = 255.0, .y = 458.0 },
+        .RU = { .x = 323.0, .y = 458.0 },
+        .LD = { .x = 143.0, .y = 633.0 },
+        .RD = { .x = 418.0, .y = 633.0 }
+    };
+
+    long double m[9];
+
+    unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
+    if (!img) {
+        perror("Error al asignar memoria para la imagen");
+        munmap(buffer, buf.length);
+        close(fd);
+        return 1;
+    }
+
     while(rep == 0){
         rep ++;
-        const char *device = "/dev/video0";
-        int fd = open(device, O_RDWR);
-        if (fd == -1) {
-            perror("Error al abrir el dispositivo de video");
-            return 1;
-        }
-
-        // Consultar capacidades del dispositivo
-        struct v4l2_capability cap;
-        if (ioctl(fd, VIDIOC_QUERYCAP, &cap) == -1) {
-            perror("Error al consultar capacidades del dispositivo");
-            close(fd);
-            return 1;
-        }
-
-        // Configurar formato de video
-        struct v4l2_format fmt;
-        memset(&fmt, 0, sizeof(fmt));
-        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        fmt.fmt.pix.width = IMAGE_WIDTH;
-        fmt.fmt.pix.height = IMAGE_HEIGHT;
-        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG; // Formato MJPEG
-        fmt.fmt.pix.field = V4L2_FIELD_NONE;
-
-        if (ioctl(fd, VIDIOC_S_FMT, &fmt) == -1) {
-            perror("Error al configurar el formato de video");
-            close(fd);
-            return 1;
-        }
-
-        // Solicitar buffers de memoria
-        struct v4l2_requestbuffers req;
-        memset(&req, 0, sizeof(req));
-        req.count = 1;  // Usar un solo buffer
-        req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        req.memory = V4L2_MEMORY_MMAP;
-
-        if (ioctl(fd, VIDIOC_REQBUFS, &req) == -1) {
-            perror("Error al solicitar buffers");
-            close(fd);
-            return 1;
-        }
-
-        // Mapear el buffer
-        struct v4l2_buffer buf;
-        memset(&buf, 0, sizeof(buf));
-        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.index = 0;
-
-        if (ioctl(fd, VIDIOC_QUERYBUF, &buf) == -1) {
-            perror("Error al consultar buffer");
-            close(fd);
-            return 1;
-        }
-
-        unsigned char *buffer = (unsigned char*)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
-        if (buffer == MAP_FAILED) {
-            perror("Error al mapear buffer");
-            close(fd);
-            return 1;
-        }
-
-        // Iniciar la captura de video
-        if (ioctl(fd, VIDIOC_STREAMON, &buf.type) == -1) {
-            perror("Error al iniciar la transmisión");
-            close(fd);
-            return 1;
-        }
-
-        Section org_im = {
-            .LU = { .x = 255.0, .y = 458.0 },
-            .RU = { .x = 323.0, .y = 458.0 },
-            .LD = { .x = 143.0, .y = 633.0 },
-            .RD = { .x = 418.0, .y = 633.0 }
-        };
-
-        long double m[9];
 
         clock_t t;
         t = clock();
@@ -501,14 +506,6 @@ int main()
         fwrite(buffer, buf.bytesused, 1, file);
         fclose(file);*/
 
-        unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
-        if (!img) {
-            perror("Error al asignar memoria para la imagen");
-            munmap(buffer, buf.length);
-            close(fd);
-            return 1;
-        }
-
         if (decode_mjpeg_to_rgb(buffer, buf.bytesused, img) == -1) {
             fprintf(stderr, "Error decoding MJPEG frame\n");
             free(img);
@@ -517,7 +514,7 @@ int main()
             return 1;
         }
 
-        stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
+        //stbi_write_jpg("pruebaimg.jpg", IMAGE_WIDTH, IMAGE_HEIGHT, 3, img, 100);
 
         printf("Roll: %.4f, Pitch: %.4f\n", roll_p, pitch_p);
 
@@ -540,7 +537,7 @@ int main()
             .RD = { .x = (long double)f_width, .y = (long double)f_height }
         };
 
-        P2Coefs(&im, &per, &m);
+        /*P2Coefs(&im, &per, &m);
 
         printf("%.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf, %.8Lf\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
 
@@ -585,7 +582,7 @@ int main()
             } else {
                 prev = *p;
             }
-        }
+        }*/
 
         char param1 = '1';
         char param2 = '1';
@@ -610,23 +607,23 @@ int main()
         double time_taken = ((double)t)/CLOCKS_PER_SEC;
         printf("Tardo %f segundos en procesar.\n", time_taken);
         printf("FPS: %f.\n", 1/(time_taken));
-
-        printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
-        stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
-
-        printf("No lane detected");
-
-        free(ptimg);
-
-        t = clock() - t;
-        time_taken = ((double)t)/CLOCKS_PER_SEC;
-        printf("Tardo %f segundos en guardar la imgajen.\n", time_taken);
-
-
-        // Liberar recursos
-        free(img);
-        munmap(buffer, buf.length);
-        close(fd);
     }
+
+    printf("Se guardo la imagen con ancho: %dpx, alto: %dpx\n", f_width, f_height);
+    stbi_write_jpg("cpimg.jpg", f_width, f_height, 1, ptimg, 100);
+
+    printf("No lane detected");
+
+    free(ptimg);
+
+    t = clock() - t;
+    time_taken = ((double)t)/CLOCKS_PER_SEC;
+    printf("Tardo %f segundos en guardar la imgajen.\n", time_taken);
+
+
+    // Liberar recursos
+    free(img);
+    munmap(buffer, buf.length);
+    close(fd);
 
 }
