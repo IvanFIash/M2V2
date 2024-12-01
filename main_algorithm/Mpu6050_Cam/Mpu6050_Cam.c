@@ -752,8 +752,6 @@ int main()
     unsigned char *img = (unsigned char *)malloc(IMAGE_WIDTH * IMAGE_HEIGHT * 3);
     if (!img) {
         perror("Error al asignar memoria para la imagen");
-        munmap(buffer, buf.length);
-        close(fd);
         return 1;
     }
 
