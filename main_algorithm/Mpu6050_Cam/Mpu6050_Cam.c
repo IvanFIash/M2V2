@@ -871,7 +871,6 @@ int main()
     double time_taken;
 
     while(rep == 0){
-        rep ++;
         t = clock();
 
         // Poner el buffer en cola
@@ -997,7 +996,7 @@ int main()
 
         apliHoughTrans(hysimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam, 0.2, 50, lines);
 
-        draw_lines(img, IMAGE_WIDTH, IMAGE_HEIGHT, channels, lines, 100);
+        draw_lines(img, IMAGE_WIDTH, IMAGE_HEIGHT-40, channels, lines, 100);
 
         char chbuffer[11]; // 10 caracteres más el terminador nulo
 
