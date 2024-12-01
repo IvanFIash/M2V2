@@ -845,10 +845,10 @@ int main()
     }
 
     //Sobel
-    unsigned char *simg = (unsigned char *) malloc(gimg_size);
+    //unsigned char *simg = (unsigned char *) malloc(gimg_size);
     unsigned char *dimg = (unsigned char *) malloc(gimg_size);
 
-    if (simg == NULL) {
+    /*if (simg == NULL) {
         printf("Error alocando memoria\n");
         exit(1);
     }
@@ -865,7 +865,7 @@ int main()
     if (hysimg == NULL) {
         printf("Error alocando memoria\n");
         exit(1);
-    }
+    }*/
 
     clock_t t;
     double time_taken;
@@ -985,16 +985,16 @@ int main()
 
         apliFil(gimg, fimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam);
 
-        apliSobel(fimg, simg, dimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam);
+        apliSobel(fimg, gimg, dimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam);
 
-        apliNonMaxSup(simg, nmsimg, dimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam);
+        apliNonMaxSup(gimg, fimg, dimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam);
 
-        apliHyste(nmsimg, hysimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam, 20, 50);
+        apliHyste(fimg, gimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam, 20, 50);
 
         //Hough Transform
         Line lines[100];
 
-        apliHoughTrans(hysimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam, 0.2, 50, lines);
+        apliHoughTrans(gimg, IMAGE_WIDTH, IMAGE_HEIGHT, img_tam, 0.2, 50, lines);
 
         draw_lines(img, IMAGE_WIDTH, IMAGE_HEIGHT-40, channels, lines, 100);
 
@@ -1034,11 +1034,12 @@ int main()
     // Liberar recursos
     free(img);
     free(gimg);
-    free(fimg);
+    free(dimg);
+    /*free(fimg);
     free(simg);
     free(dimg);
     free(nmsimg);
-    free(hysimg);
+    free(hysimg);*/
     munmap(buffer, buf.length);
     close(fd);
 
