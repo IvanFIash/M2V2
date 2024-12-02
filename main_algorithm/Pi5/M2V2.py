@@ -131,7 +131,7 @@ left_fit = np.zeros(3)
 right_fit = np.zeros(3)
 
 # Inicializar la webcam
-cap = cv2.VideoCapture(2)  # 0 es el ID de la cámara predeterminada
+cap = cv2.VideoCapture(0)  # 0 es el ID de la cámara predeterminada
 
 ancho = 1280  # Cambia esto por el ancho deseado
 alto = 720    # Cambia esto por la altura deseada
