@@ -126,14 +126,14 @@ right_fit = np.zeros(3)
 
 cap = cv2.VideoCapture(0)  # 0 es el ID de la cámara predeterminada
 
-    ancho = 1280  # Cambia esto por el ancho deseado
-    alto = 720    # Cambia esto por la altura deseada
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, ancho)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, alto)
+ancho = 1280  # Cambia esto por el ancho deseado
+alto = 720    # Cambia esto por la altura deseada
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, ancho)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, alto)
 
-    if not cap.isOpened():
-        print("No se pudo acceder a la cámara.")
-        exit()
+if not cap.isOpened():
+    print("No se pudo acceder a la cámara.")
+    exit()
 
 while True:
     start_time = time()
