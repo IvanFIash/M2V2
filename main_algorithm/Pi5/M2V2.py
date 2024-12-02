@@ -89,23 +89,25 @@ def measure_curvature(left_f, right_f):
 
 def calcular_buffer_led(pos):
     buffer = ['0'] * 10
+
+    # Mapear posición `pos` de -8 a 8 hacia -2 a 2
     if pos < -8 or pos > 8:
-        buffer = ['1'] * 10
+        buffer = ['1'] * 10  # Si está fuera de rango, encender todos los LEDs
     else:
         mapped_pos = int(round((pos / 8) * 2))  # Mapear a rango -2 a 2
-        pattern = ['0'] * 5
-        center = 2
-        if mapped_pos < 0:
-            pattern[center + mapped_pos] = '1'
-            pattern[center + mapped_pos + 1] = '1'
-        elif mapped_pos > 0:
-            pattern[center + mapped_pos] = '1'
-            pattern[center + mapped_pos - 1] = '1'
-        else:
-            pattern[center - 1] = '1'
-            pattern[center + 1] = '1'
-        buffer = pattern + pattern
+
+        # Centro de los dos LEDs encendidos
+        center_left = 2 + mapped_pos  # Línea izquierda
+        center_right = 7 + mapped_pos  # Línea derecha
+
+        # Asegurar que las posiciones estén dentro del rango del buffer
+        if 0 <= center_left < 10:
+            buffer[center_left] = '1'
+        if 0 <= center_right < 10:
+            buffer[center_right] = '1'
+
     return buffer
+
 
 def encender_leds(buffer):
     for i, estado in enumerate(buffer):
