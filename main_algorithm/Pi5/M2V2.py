@@ -135,98 +135,100 @@ if not cap.isOpened():
     print("No se pudo acceder a la cámara.")
     exit()
 
-while True:
-    start_time = time()
-    # Inicializar la webcam
+#for i in range(1):
+start_time = time()
+# Inicializar la webcam
 
-    ret, frame = cap.read()
-    if not ret:
-        print("No se pudo leer el frame de la cámara.")
-    else:
-        #cv2.imwrite('captura.jpg', frame)
-        cap.release()
+ret, frame = cap.read()
+if not ret:
+    print("No se pudo leer el frame de la cámara.")
+    exit()
+else:
+    cv2.imwrite('captura.jpg', frame)
+    #cap.release()
 
-    src = np.float32([(155, 0),     # top-left
-                    (0, 720),     # bottom-left
-                    (1175, 720),    # bottom-right
-                    (980, 0)])    # top-right
+src = np.float32([(155, 0),     # top-left
+                (0, 720),     # bottom-left
+                (1175, 720),    # bottom-right
+                (980, 0)])    # top-right
 
-    dst = np.float32([(100, 0),
-                    (100, 720),
-                    (1100, 720),
-                    (1100, 0)])
+dst = np.float32([(100, 0),
+                (100, 720),
+                (1100, 720),
+                (1100, 0)])
 
-    M = cv2.getPerspectiveTransform(src, dst)
+M = cv2.getPerspectiveTransform(src, dst)
 
-    per_img = cv2.warpPerspective(frame, M, (1280, 720), flags=cv2.INTER_LINEAR)
+per_img = cv2.warpPerspective(frame, M, (1280, 720), flags=cv2.INTER_LINEAR)
 
-    #cv2.imwrite('per.jpg', per_img)
+#cv2.imwrite('per.jpg', per_img)
 
-    hls = cv2.cvtColor(per_img, cv2.COLOR_RGB2HLS)
-    hsv = cv2.cvtColor(per_img, cv2.COLOR_RGB2HSV)
-    h_channel = hls[:,:,0]
-    l_channel = hls[:,:,1]
-    s_channel = hls[:,:,2]
-    v_channel = hsv[:,:,2]
+hls = cv2.cvtColor(per_img, cv2.COLOR_RGB2HLS)
+hsv = cv2.cvtColor(per_img, cv2.COLOR_RGB2HSV)
+h_channel = hls[:,:,0]
+l_channel = hls[:,:,1]
+s_channel = hls[:,:,2]
+v_channel = hsv[:,:,2]
 
-    right_lane = threshold_rel(l_channel, 0.5, 1.0)
-    right_lane[:,:750] = 0
+right_lane = threshold_rel(l_channel, 0.5, 1.0)
+right_lane[:,:750] = 0
 
-    left_lane = threshold_abs(h_channel, 10, 30)
-    left_lane &= threshold_rel(v_channel, 0.4, 1.0)
-    left_lane[:,550:] = 0
+left_lane = threshold_abs(h_channel, 10, 30)
+left_lane &= threshold_rel(v_channel, 0.4, 1.0)
+left_lane[:,550:] = 0
 
-    rel_img = left_lane | right_lane
+rel_img = left_lane | right_lane
 
-    #cv2.imwrite('rel.jpg', rel_img)
+#cv2.imwrite('rel.jpg', rel_img)
 
-    # Height of of windows - based on nwindows and image shape
-    window_height = int(rel_img.shape[0]//nwindows)
+# Height of of windows - based on nwindows and image shape
+window_height = int(rel_img.shape[0]//nwindows)
 
-    # Identify the x and y positions of all nonzero pixel in the image
-    nonzero = rel_img.nonzero()
-    nonzerox = np.array(nonzero[1])
-    nonzeroy = np.array(nonzero[0])
+# Identify the x and y positions of all nonzero pixel in the image
+nonzero = rel_img.nonzero()
+nonzerox = np.array(nonzero[1])
+nonzeroy = np.array(nonzero[0])
 
-    leftx, lefty, rightx, righty, out_img = find_lane_pixels(rel_img, window_height, nwindows, nonzerox, nonzeroy, minpix)
+leftx, lefty, rightx, righty, out_img = find_lane_pixels(rel_img, window_height, nwindows, nonzerox, nonzeroy, minpix)
 
-    if len(lefty) > 1500:
-        left_fit = np.polyfit(lefty, leftx, 2)
-    if len(righty) > 1500:
-        right_fit = np.polyfit(righty, rightx, 2)
+if len(lefty) > 1500:
+    left_fit = np.polyfit(lefty, leftx, 2)
+if len(righty) > 1500:
+    right_fit = np.polyfit(righty, rightx, 2)
 
-    # Generate x and y values for plotting
-    maxy = rel_img.shape[0] - 1
-    miny = rel_img.shape[0] // 3
-    if len(lefty):
-        maxy = max(maxy, np.max(lefty))
-        miny = min(miny, np.min(lefty))
+# Generate x and y values for plotting
+maxy = rel_img.shape[0] - 1
+miny = rel_img.shape[0] // 3
+if len(lefty):
+    maxy = max(maxy, np.max(lefty))
+    miny = min(miny, np.min(lefty))
 
-    if len(righty):
-        maxy = max(maxy, np.max(righty))
-        miny = min(miny, np.min(righty))
+if len(righty):
+    maxy = max(maxy, np.max(righty))
+    miny = min(miny, np.min(righty))
 
-    ploty = np.linspace(miny, maxy, rel_img.shape[0])
+ploty = np.linspace(miny, maxy, rel_img.shape[0])
 
-    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
 
-    # Visualization
-    for i, y in enumerate(ploty):
-        l = int(left_fitx[i])
-        r = int(right_fitx[i])
-        y = int(y)
-        cv2.line(out_img, (l, y), (r, y), (0, 255, 0))
+# Visualization
+for i, y in enumerate(ploty):
+    l = int(left_fitx[i])
+    r = int(right_fitx[i])
+    y = int(y)
+    cv2.line(out_img, (l, y), (r, y), (0, 255, 0))
 
-    lR, rR, pos = measure_curvature(left_fit, right_fit)
-    end_time = time()  # End timing
-    elapsed_time = end_time - start_time
+lR, rR, pos = measure_curvature(left_fit, right_fit)
+end_time = time()  # End timing
+elapsed_time = end_time - start_time
 
-    #cv2.imwrite('out.jpg', out_img)
-    print(pos)
+#cv2.imwrite('out.jpg', out_img)
+print(pos)
 
-    buffer = calcular_buffer_led(pos)
-    print(f"Buffer generado: {''.join(buffer)}")  # Verificar buffer
-    print(f"Time taken: {elapsed_time:.6f} seconds. FPS: {1/elapsed_time}")
-    encender_leds(buffer)
+buffer = calcular_buffer_led(pos)
+print(f"Buffer generado: {''.join(buffer)}")  # Verificar buffer
+print(f"Time taken: {elapsed_time:.6f} seconds. FPS: {1/elapsed_time}")
+encender_leds(buffer)
 
+cap.release()
