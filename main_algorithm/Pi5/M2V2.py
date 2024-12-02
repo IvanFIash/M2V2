@@ -124,10 +124,7 @@ minpix = 50
 left_fit = np.zeros(3)
 right_fit = np.zeros(3)
 
-while True:
-    start_time = time()
-    # Inicializar la webcam
-    cap = cv2.VideoCapture(0)  # 0 es el ID de la cámara predeterminada
+cap = cv2.VideoCapture(0)  # 0 es el ID de la cámara predeterminada
 
     ancho = 1280  # Cambia esto por el ancho deseado
     alto = 720    # Cambia esto por la altura deseada
@@ -138,14 +135,16 @@ while True:
         print("No se pudo acceder a la cámara.")
         exit()
 
+while True:
+    start_time = time()
+    # Inicializar la webcam
+
     ret, frame = cap.read()
     if not ret:
         print("No se pudo leer el frame de la cámara.")
     else:
         #cv2.imwrite('captura.jpg', frame)
-        pass
-
-    cap.release()
+        cap.release()
 
     src = np.float32([(155, 0),     # top-left
                     (0, 720),     # bottom-left
