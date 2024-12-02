@@ -122,7 +122,7 @@ minpix = 50
 left_fit = np.zeros(3)
 right_fit = np.zeros(3)
 
-start_time = time.time()
+start_time = time()
 # Inicializar la webcam
 cap = cv2.VideoCapture(0)  # 0 es el ID de la cámara predeterminada
 
@@ -217,7 +217,7 @@ for i, y in enumerate(ploty):
     cv2.line(out_img, (l, y), (r, y), (0, 255, 0))
 
 lR, rR, pos = measure_curvature(left_fit, right_fit)
-end_time = time.time()  # End timing
+end_time = time()  # End timing
 elapsed_time = end_time - start_time
 
 #cv2.imwrite('out.jpg', out_img)
