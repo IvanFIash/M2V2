@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from time import time
 from pi5neo import Pi5Neo
 
 # Initialize the Pi5Neo class with 10 LEDs and an SPI speed of 800kHz
@@ -87,38 +88,29 @@ def measure_curvature(left_f, right_f):
     return left_curveR, right_curveR, pos
 
 def calcular_buffer_led(pos):
-    """
-    Calcula el buffer de LED con base en la posición relativa `pos`.
-    :param pos: Desplazamiento con respecto al centro (-8 a 8).
-    :return: Lista de 10 valores (0 o 1) indicando cuáles LEDs encender.
-    """
-    # Inicializar buffer con ceros
     buffer = ['0'] * 10
-    centro = 5  # Índice central del buffer (LED 5)
-
     if pos < -8 or pos > 8:
-        # Si `pos` está fuera de rango, encender todos los LEDs
         buffer = ['1'] * 10
     else:
-        # Convertir `pos` (-8 a 8) a un índice de LED relativo
-        indice = int(round((pos / 8) * 4))  # Mapea de -8 a 8 a -4 a 4
-        if indice < 0:
-            buffer[centro + indice] = '1'  # Encender LED a la izquierda
-        elif indice > 0:
-            buffer[centro + indice] = '1'  # Encender LED a la derecha
+        mapped_pos = int(round((pos / 8) * 2))  # Mapear a rango -2 a 2
+        pattern = ['0'] * 5
+        center = 2
+        if mapped_pos < 0:
+            pattern[center + mapped_pos] = '1'
+            pattern[center + mapped_pos + 1] = '1'
+        elif mapped_pos > 0:
+            pattern[center + mapped_pos] = '1'
+            pattern[center + mapped_pos - 1] = '1'
         else:
-            buffer[centro] = '1'  # Encender el LED central
-
+            pattern[center - 1] = '1'
+            pattern[center + 1] = '1'
+        buffer = pattern + pattern
     return buffer
 
 def encender_leds(buffer):
-    """
-    Enciende los LEDs según el buffer generado.
-    :param buffer: Lista de 10 valores (0 o 1).
-    """
     for i, estado in enumerate(buffer):
         if estado == '1':
-            neo.set_led_color(i, 255, 255, 255, 255)  # Blanco máximo (RGBW)
+            neo.set_led_color(i, 0, 0, 0, 255)  # Blanco máximo (RGBW)
         else:
             neo.set_led_color(i, 0, 0, 0, 0)  # Apagado
 
@@ -130,6 +122,7 @@ minpix = 50
 left_fit = np.zeros(3)
 right_fit = np.zeros(3)
 
+start_time = time.time()
 # Inicializar la webcam
 cap = cv2.VideoCapture(0)  # 0 es el ID de la cámara predeterminada
 
@@ -146,7 +139,7 @@ ret, frame = cap.read()
 if not ret:
     print("No se pudo leer el frame de la cámara.")
 else:
-    cv2.imwrite('captura.jpg', frame)
+    #cv2.imwrite('captura.jpg', frame)
 
 cap.release()
 
@@ -164,7 +157,7 @@ M = cv2.getPerspectiveTransform(src, dst)
 
 per_img = cv2.warpPerspective(frame, M, (1280, 720), flags=cv2.INTER_LINEAR)
 
-cv2.imwrite('per.jpg', per_img)
+#cv2.imwrite('per.jpg', per_img)
 
 hls = cv2.cvtColor(per_img, cv2.COLOR_RGB2HLS)
 hsv = cv2.cvtColor(per_img, cv2.COLOR_RGB2HSV)
@@ -182,7 +175,7 @@ left_lane[:,550:] = 0
 
 rel_img = left_lane | right_lane
 
-cv2.imwrite('rel.jpg', rel_img)
+#cv2.imwrite('rel.jpg', rel_img)
 
 # Height of of windows - based on nwindows and image shape
 window_height = int(rel_img.shape[0]//nwindows)
@@ -223,11 +216,14 @@ for i, y in enumerate(ploty):
     cv2.line(out_img, (l, y), (r, y), (0, 255, 0))
 
 lR, rR, pos = measure_curvature(left_fit, right_fit)
+end_time = time.time()  # End timing
+elapsed_time = end_time - start_time
 
-cv2.imwrite('out.jpg', out_img)
+#cv2.imwrite('out.jpg', out_img)
 print(pos)
 
 buffer = calcular_buffer_led(pos)
 print(f"Buffer generado: {''.join(buffer)}")  # Verificar buffer
+print(f"Time taken: {elapsed_time:.6f} seconds. FPS: {1/elapsed_time}")
 encender_leds(buffer)
 
