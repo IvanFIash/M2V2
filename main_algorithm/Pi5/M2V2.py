@@ -140,6 +140,7 @@ if not ret:
     print("No se pudo leer el frame de la cámara.")
 else:
     #cv2.imwrite('captura.jpg', frame)
+    pass
 
 cap.release()
 
